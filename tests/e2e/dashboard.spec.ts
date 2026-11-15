@@ -332,6 +332,8 @@ test.describe("items on the pay page", () => {
     // A hidden item is no longer offered.
     await page.goto("/dashboard/items");
     await page.getByRole("button", { name: "Hide" }).click();
+    // Wait for the action to finish before the buyer loads the page.
+    await expect(page.getByRole("button", { name: "Show" })).toBeVisible();
     await customer.goto(`/${seller!.handle}`);
     await expect(customer.getByLabel(/Box braids/)).toHaveCount(0);
     await customer.context().close();
