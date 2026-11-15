@@ -11,6 +11,7 @@ import {
   TikTokLogo,
   WhatsAppLogo,
 } from "@/components/public/platform-logos";
+import { ParallaxLayer } from "@/components/public/parallax";
 import { PayoutsScreen, ShareScreen } from "@/components/public/phone-screens";
 import {
   HeroFrame,
@@ -62,9 +63,15 @@ function Hero({ copy }: { copy: LandingCopy }) {
   const { hero } = copy;
   return (
     <HeroFrame nav={copy.nav} variant="home" bottomLink="#how-it-works">
-      <DotMap className="absolute top-[38%] left-[46%] hidden w-[44%] md:block" />
+      <ParallaxLayer
+        scroll={0.02}
+
+        className="absolute top-[38%] left-[46%] hidden w-[44%] md:block"
+      >
+        <DotMap className="w-full" />
+      </ParallaxLayer>
       <div className="relative grid gap-12 px-6 pt-28 pb-56 md:grid-cols-[640px_1fr] md:gap-[112px] md:px-[88px] md:pt-[170px] md:pb-0">
-        <div className="flex flex-col gap-6">
+        <ParallaxLayer scroll={-0.03} className="flex flex-col gap-6">
           {hero.label ? <p className="font-bold">{hero.label}</p> : null}
           <h1 className="max-w-[640px] text-5xl leading-[1.07] font-bold tracking-tight md:text-[56px]">
             {hero.title}
@@ -82,10 +89,10 @@ function Hero({ copy }: { copy: LandingCopy }) {
             </a>
           </div>
           <p>{hero.note}</p>
-        </div>
-        <div className="md:max-w-[400px] md:pt-16">
+        </ParallaxLayer>
+        <ParallaxLayer scroll={-0.05} className="md:max-w-[400px] md:pt-16">
           <PayoutCard copy={copy} size="hero" />
-        </div>
+        </ParallaxLayer>
       </div>
       <div className="absolute inset-x-0 bottom-20 flex flex-col items-center gap-3 px-4">
         <p className="font-bold">{hero.shareLabel}</p>

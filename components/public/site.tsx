@@ -1,6 +1,8 @@
 import Link from "next/link";
-import { ChevronDown, Search } from "lucide-react";
+import { ChevronDown } from "lucide-react";
 import type { ReactNode } from "react";
+import { DesktopHeaderSearch, MobileHeaderSearch } from "@/components/public/header-search";
+import { ParallaxLayer } from "@/components/public/parallax";
 import type { LandingCopy } from "@/lib/public/copy";
 
 /*
@@ -64,17 +66,13 @@ function HeroHeader({ nav }: { nav: LandingCopy["nav"] }) {
           </Link>
         ))}
       </nav>
-      <div className="absolute top-0 right-0 z-10 hidden h-14 w-[13.5%] items-center justify-center gap-4 text-white md:flex">
-        <Search className="size-6" aria-hidden="true" />
-        <Link href="/sign-in" className="font-bold">
-          {nav.logIn}
-        </Link>
-      </div>
+      <DesktopHeaderSearch logIn={nav.logIn} />
       {/* Phone */}
-      <div className="flex items-center justify-between px-6 pt-4 md:hidden">
+      <div className="relative z-10 flex items-center justify-between px-6 pt-4 md:hidden">
         <Link href="/" aria-label="Ollo home">
           <Wordmark light={false} />
         </Link>
+        <MobileHeaderSearch />
         <details className="relative">
           <summary className="flex h-11 cursor-pointer list-none items-center rounded-full bg-[var(--ollo-teal-900)] px-5 font-bold text-white">
             Menu
@@ -98,6 +96,17 @@ function HeroHeader({ nav }: { nav: LandingCopy["nav"] }) {
   );
 }
 
+/** The back layer (the "Parallax back" shape): the slowest layer. */
+function Back({ parallax, children }: { parallax: boolean; children: ReactNode }) {
+  return parallax ? (
+    <ParallaxLayer scroll={0.05} className="absolute inset-0">
+      {children}
+    </ParallaxLayer>
+  ) : (
+    <div className="absolute inset-0">{children}</div>
+  );
+}
+
 /**
  * The hero: dark page, a gradient shape with the design's notches. `home` is the tall hero with the
  * "See how it works" notch at the bottom, `inner` the short one used on the other pages.
@@ -117,29 +126,33 @@ export function HeroFrame({
   return (
     <section className={`${TEAL} p-3 md:p-6`}>
       <div
-        className={`relative overflow-hidden rounded-[28px] md:overflow-visible md:rounded-none md:bg-none ${MINT_GRADIENT} ${home ? "min-h-[820px] md:h-[900px]" : "min-h-[320px] md:h-[380px]"}`}
+        className={`relative overflow-hidden rounded-[28px] md:overflow-visible md:rounded-none ${home ? "min-h-[820px] md:h-[900px]" : "min-h-[320px] md:h-[380px]"}`}
       >
-        <svg
-          aria-hidden="true"
-          viewBox={`0 0 1392 ${home ? 900 : 380}`}
-          preserveAspectRatio="none"
-          className="absolute inset-0 hidden size-full md:block"
-        >
-          <defs>
-            <linearGradient
-              id={`hero-fill-${variant}`}
-              gradientUnits="userSpaceOnUse"
-              x1="455.191"
-              y1={home ? -109.582 : -46.2678}
-              x2={home ? 673.058 : 495.862}
-              y2={home ? 795.417 : 353.854}
-            >
-              <stop stopColor="#00C781" />
-              <stop offset="1" stopColor="#D3F6E7" />
-            </linearGradient>
-          </defs>
-          <path d={home ? HOME_SHAPE : INNER_SHAPE} fill={`url(#hero-fill-${variant})`} />
-        </svg>
+        <Back parallax={home}>
+          {/* Phone: the plain gradient. It reaches above the hero so it can slide without a gap. */}
+          <div className={`absolute inset-x-0 -top-16 bottom-0 md:hidden ${MINT_GRADIENT}`} />
+          <svg
+            aria-hidden="true"
+            viewBox={`0 0 1392 ${home ? 900 : 380}`}
+            preserveAspectRatio="none"
+            className="absolute inset-0 hidden size-full md:block"
+          >
+            <defs>
+              <linearGradient
+                id={`hero-fill-${variant}`}
+                gradientUnits="userSpaceOnUse"
+                x1="455.191"
+                y1={home ? -109.582 : -46.2678}
+                x2={home ? 673.058 : 495.862}
+                y2={home ? 795.417 : 353.854}
+              >
+                <stop stopColor="#00C781" />
+                <stop offset="1" stopColor="#D3F6E7" />
+              </linearGradient>
+            </defs>
+            <path d={home ? HOME_SHAPE : INNER_SHAPE} fill={`url(#hero-fill-${variant})`} />
+          </svg>
+        </Back>
         <HeroHeader nav={nav} />
         {children}
         {home && bottomLink ? (
