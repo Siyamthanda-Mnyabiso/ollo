@@ -73,7 +73,7 @@ test("terms and privacy are marked as placeholders for a lawyer", async ({ page 
   for (const path of ["/terms", "/privacy"]) {
     await page.goto(path);
     await expect(page.getByTestId("legal-placeholder-notice")).toContainText("legal adviser");
-    await expect(page.getByText(/to be written by a lawyer/).first()).toBeVisible();
+    await expect(page.getByText(/to be written by a lawyer/).first()).toBeAttached();
   }
 });
 
@@ -101,4 +101,34 @@ test("the landing page links to every public page and shows the two real phone s
   // Step 2 shows the share screen and feature 04 the payouts screen, with sample data.
   await expect(page.getByText("ollopay.co.za/demo-thandi")).toBeVisible();
   await expect(page.getByText("Waiting to be paid out")).toBeVisible();
+});
+
+test("pricing follows the frame: plan labels, icon rows and the What / Cost table", async ({
+  page,
+}) => {
+  await page.goto("/pricing");
+  await expect(page.getByText("Free plan", { exact: true })).toBeVisible();
+  await expect(page.getByText("Pro plan", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Go Pro" })).toBeVisible();
+  await expect(page.getByText("What", { exact: true })).toBeVisible();
+  await expect(page.getByText("Cost", { exact: true })).toBeVisible();
+  await expect(page.getByText("3% bank, 3.9% card. Pro: 2.5% bank")).toBeVisible();
+});
+
+test("the contact form has the frame's fields and a seller option picked by default", async ({
+  page,
+}) => {
+  await page.goto("/contact");
+  for (const label of ["Your name", "Email address", "Cellphone number", "Message"]) {
+    await expect(page.getByLabel(label).first()).toBeVisible();
+  }
+  await expect(page.getByRole("radio", { name: "Seller" })).toBeChecked();
+  await expect(page.getByText("hello@ollopay.co.za")).toBeVisible();
+});
+
+test("about shows the three beliefs from the frame", async ({ page }) => {
+  await page.goto("/about");
+  for (const t of ["Made for sellers", "Simple by default", "Safe for buyers"]) {
+    await expect(page.getByRole("heading", { name: t })).toBeVisible();
+  }
 });

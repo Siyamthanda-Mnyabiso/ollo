@@ -8,7 +8,7 @@ export const metadata = { title: "About" };
 export default function Page() {
   return (
     <Suspense fallback={null}>
-      <LivePage title={ABOUT.hero.title} subtitle={ABOUT.hero.body}>
+      <LivePage active="/about" title={ABOUT.hero.title} subtitle={ABOUT.hero.body}>
         <AboutBody />
       </LivePage>
     </Suspense>

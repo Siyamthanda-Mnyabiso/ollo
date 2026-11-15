@@ -19,6 +19,7 @@ export const PRICING = {
   },
   plans: [
     {
+      label: "Free plan",
       name: "Start selling",
       price: "Free",
       lines: [
@@ -29,6 +30,7 @@ export const PRICING = {
       button: "Make your pay link",
     },
     {
+      label: "Pro plan",
       name: "Grow with Ollo Pro",
       price: PLAN_OPTIONS.find((p) => p.value === "pro")!.price,
       lines: [`${rate("pro", "bank")} per bank sale`, "Custom domain and no Ollo branding"],
@@ -37,12 +39,14 @@ export const PRICING = {
   ],
   table: {
     title: "What you pay",
+    head: ["What", "Cost"],
     rows: [
-      ["Pay link and pay page", "Free"],
-      [
-        "Payments",
-        `Free plan: ${rate("free", "bank")} bank, ${rate("free", "card")} card. Pro: ${rate("pro", "bank")} bank`,
-      ],
+      { name: "Pay link and pay page", value: "Free", strong: true },
+      {
+        name: "Payments (Free plan)",
+        value: `${rate("free", "bank")} bank, ${rate("free", "card")} card. Pro: ${rate("pro", "bank")} bank`,
+        strong: false,
+      },
     ],
   },
 };
@@ -125,7 +129,7 @@ export const LEGAL_NOTICE = {
   title: "Draft layout",
   body: "The legal wording must come from your legal adviser before launch.",
 };
-export const LEGAL_PLACEHOLDER = "Placeholder. This text is to be written by a lawyer.";
+export const LEGAL_PLACEHOLDER = "Placeholder text, to be written by a lawyer.";
 
 export const TERMS: LegalPage = {
   title: "Terms of service",

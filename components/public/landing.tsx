@@ -67,7 +67,7 @@ function Hero({ copy }: { copy: LandingCopy }) {
       >
         <DotMap className="w-full" />
       </ParallaxLayer>
-      <div className="relative grid gap-12 px-6 pt-28 pb-56 md:grid-cols-[640px_1fr] md:gap-[112px] md:px-[88px] md:pt-[170px] md:pb-0">
+      <div className="relative grid gap-12 px-6 pt-[7.5rem] pb-56 md:grid-cols-[640px_1fr] md:gap-[112px] md:px-[88px] md:pt-[170px] md:pb-0">
         <ParallaxLayer scroll={-0.03} className="flex flex-col gap-6">
           {hero.label ? <p className="font-bold">{hero.label}</p> : null}
           <h1 className="max-w-[640px] text-5xl leading-[1.07] font-bold tracking-tight md:text-[56px]">
@@ -118,8 +118,11 @@ function BentoCard({
   children,
   badge,
   textWidth = 360,
+  flush = false,
 }: {
   textWidth?: number;
+  /** Phone cards: no padding below, so the phone sits flush with the card's bottom edge on phones. */
+  flush?: boolean;
   className: string;
   title: string;
   body: string;
@@ -136,8 +139,13 @@ function BentoCard({
   const bodyColour =
     tone === "dark" ? "text-[#d3f6e7]" : tone === "gradient" ? "" : "text-[var(--ollo-ink-500)]";
   return (
-    <div className={`relative overflow-hidden rounded-[32px] p-8 ${surface} ${className}`}>
-      <div className="relative z-10 flex flex-col gap-3" style={{ maxWidth: textWidth }}>
+    <div
+      className={`relative overflow-hidden rounded-[32px] p-6 md:p-8 ${flush ? "pb-0 md:pb-8" : ""} ${surface} ${className}`}
+    >
+      <div
+        className="relative z-10 flex flex-col gap-3 md:max-w-(--text-w)"
+        style={{ "--text-w": `${textWidth}px` } as React.CSSProperties}
+      >
         {badge}
         <h3 className="text-[28px] leading-[35px] font-bold">{title}</h3>
         <p className={bodyColour}>{body}</p>
@@ -152,29 +160,44 @@ function How({ copy }: { copy: LandingCopy }) {
   return (
     <section
       id="how-it-works"
-      className="mx-auto w-full max-w-[1248px] scroll-mt-4 px-4 py-16 md:px-16 md:py-24"
+      className="mx-auto w-full max-w-[1248px] scroll-mt-4 px-4 py-12 md:px-16 md:py-24"
     >
-      <h2 className="mb-12 text-[40px] leading-[48px] font-bold">{copy.how.title}</h2>
+      <h2 className="mb-6 text-[32px] leading-10 font-bold md:mb-12 md:text-[40px] md:leading-[48px]">
+        {copy.how.title}
+      </h2>
       <div className="grid gap-6 md:grid-cols-[672fr_424fr]">
         <BentoCard
-          className="min-h-[380px]"
+          flush
+          className="md:min-h-[380px]"
           tone="white"
           textWidth={240}
           title={one!.title}
           body={one!.body}
         >
-          <PhoneSlot className="mx-auto mt-8 h-56 w-[296px] max-w-full md:absolute md:top-8 md:right-14 md:mt-0 md:h-[400px]" />
+          <PhoneSlot className="mx-auto mt-6 h-[300px] w-full max-w-[310px] rounded-b-none border-b-0 md:absolute md:top-8 md:right-14 md:mt-0 md:h-[400px] md:w-[296px] md:rounded-b-[32px] md:border-b-8" />
         </BentoCard>
-        <BentoCard className="min-h-[380px]" tone="dark" title={two!.title} body={two!.body}>
-          <ShareScreen className="mx-auto mt-8 h-72 w-[296px] max-w-full md:absolute md:top-[151px] md:left-1/2 md:mt-0 md:h-[378px] md:-translate-x-1/2" />
+        <BentoCard
+          flush
+          className="md:min-h-[380px]"
+          tone="dark"
+          title={two!.title}
+          body={two!.body}
+        >
+          <ShareScreen className="mx-auto mt-6 h-[300px] w-full max-w-[310px] rounded-b-none border-b-0 md:absolute md:top-[151px] md:left-1/2 md:mt-0 md:h-[378px] md:w-[296px] md:-translate-x-1/2 md:rounded-b-[32px] md:border-b-8" />
         </BentoCard>
       </div>
       <div className="mt-6 grid gap-6 md:grid-cols-[424fr_672fr]">
-        <BentoCard className="min-h-[424px]" tone="tint" title={three!.title} body={three!.body}>
-          <PhoneSlot className="mx-auto mt-8 h-56 w-[296px] max-w-full md:absolute md:top-[151px] md:left-1/2 md:mt-0 md:h-[360px] md:-translate-x-1/2" />
+        <BentoCard
+          flush
+          className="md:min-h-[424px]"
+          tone="tint"
+          title={three!.title}
+          body={three!.body}
+        >
+          <PhoneSlot className="mx-auto mt-6 h-[300px] w-full max-w-[310px] rounded-b-none border-b-0 md:absolute md:top-[151px] md:left-1/2 md:mt-0 md:h-[360px] md:w-[296px] md:-translate-x-1/2 md:rounded-b-[32px] md:border-b-8" />
         </BentoCard>
         <BentoCard
-          className="min-h-[424px]"
+          className="md:min-h-[424px]"
           tone="gradient"
           textWidth={240}
           title={four!.title}
@@ -258,7 +281,7 @@ export function Landing({ live }: { live: boolean }) {
       <main>
         <Hero copy={copy} />
         <Strip copy={copy} />
-        <div className="bg-[var(--ollo-surface)]">
+        <div className="rounded-t-[40px] bg-[var(--ollo-surface)]">
           <How copy={copy} />
           <Features copy={copy} />
         </div>

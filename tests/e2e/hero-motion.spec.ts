@@ -109,7 +109,7 @@ test.describe("header search", () => {
   test("opening it does not move anything else in the header", async ({ page, isMobile }) => {
     await page.goto("/");
     const logIn = isMobile
-      ? page.getByText("Menu", { exact: true })
+      ? page.getByLabel("Menu", { exact: true })
       : page.getByRole("link", { name: "Log in" }).filter({ visible: true });
     await expect(logIn).toBeVisible();
     await page.waitForTimeout(500);

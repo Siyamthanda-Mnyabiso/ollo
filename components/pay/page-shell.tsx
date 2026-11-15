@@ -109,7 +109,7 @@ export function PayTrust({ handle }: { handle: string }) {
       </p>
       <p className="text-center">
         <a
-          href={`mailto:support@ollopay.co.za?subject=${encodeURIComponent(`Report seller ${handle}`)}`}
+          href={`mailto:hello@ollopay.co.za?subject=${encodeURIComponent(`Report seller ${handle}`)}`}
           className="text-primary font-bold"
         >
           Report this seller

@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { ChevronDown } from "lucide-react";
+import { MenuIcon } from "@/components/public/figma-icons";
 import type { ReactNode } from "react";
 import { DesktopHeaderSearch, MobileHeaderSearch } from "@/components/public/header-search";
 import { ParallaxLayer } from "@/components/public/parallax";
@@ -46,7 +47,7 @@ const NAV_LINKS = (nav: LandingCopy["nav"]) => [
 ];
 
 /** The hero's header. On desktop it sits in the notches of the hero shape, on a phone in plain tabs. */
-function HeroHeader({ nav }: { nav: LandingCopy["nav"] }) {
+function HeroHeader({ nav, active }: { nav: LandingCopy["nav"]; active?: string }) {
   const links = NAV_LINKS(nav);
   return (
     <>
@@ -61,36 +62,46 @@ function HeroHeader({ nav }: { nav: LandingCopy["nav"] }) {
         className="absolute top-0 left-[27.3%] z-10 hidden h-16 w-[45.4%] items-center justify-center gap-10 text-white md:flex"
       >
         {links.map((l) => (
-          <Link key={l.href} href={l.href}>
+          <Link
+            key={l.href}
+            href={l.href}
+            aria-current={l.href === active ? "page" : undefined}
+            className={l.href === active ? "font-bold" : ""}
+          >
             {l.label}
           </Link>
         ))}
       </nav>
       <DesktopHeaderSearch logIn={nav.logIn} />
-      {/* Phone */}
-      <div className="relative z-10 flex items-center justify-between px-6 pt-4 md:hidden">
+      {/* Phone: logo on the left, search and menu icons on the right, as in the mobile frames. */}
+      <div className="relative z-10 flex items-center justify-between px-5 pt-5 md:hidden">
         <Link href="/" aria-label="Ollo home">
           <Wordmark light={false} />
         </Link>
         <MobileHeaderSearch />
-        <details className="relative">
-          <summary className="flex h-11 cursor-pointer list-none items-center rounded-full bg-[var(--ollo-teal-900)] px-5 font-bold text-white">
-            Menu
-          </summary>
-          <nav
-            aria-label="Main"
-            className="absolute right-0 z-20 mt-2 flex w-48 flex-col gap-4 rounded-3xl bg-[var(--ollo-teal-900)] p-5 text-white"
-          >
-            {links.map((l) => (
-              <Link key={l.href} href={l.href}>
-                {l.label}
+        <div className="flex items-center">
+          <details className="relative">
+            <summary
+              aria-label="Menu"
+              className="-my-2 -mr-2 flex size-11 cursor-pointer list-none items-center justify-center text-[var(--ollo-ink-900)]"
+            >
+              <MenuIcon />
+            </summary>
+            <nav
+              aria-label="Main"
+              className="absolute top-full right-0 z-20 mt-2 flex w-48 flex-col gap-4 rounded-3xl bg-[var(--ollo-teal-900)] p-5 text-white"
+            >
+              {links.map((l) => (
+                <Link key={l.href} href={l.href}>
+                  {l.label}
+                </Link>
+              ))}
+              <Link href="/sign-in" className="font-bold">
+                {nav.logIn}
               </Link>
-            ))}
-            <Link href="/sign-in" className="font-bold">
-              {nav.logIn}
-            </Link>
-          </nav>
-        </details>
+            </nav>
+          </details>
+        </div>
       </div>
     </>
   );
@@ -116,17 +127,20 @@ export function HeroFrame({
   variant,
   children,
   bottomLink,
+  active,
 }: {
   nav: LandingCopy["nav"];
   variant: "home" | "inner";
   children: ReactNode;
   bottomLink?: string;
+  /** The current page's link, shown bold in the nav. */
+  active?: string;
 }) {
   const home = variant === "home";
   return (
-    <section className={`${TEAL} p-3 md:p-6`}>
+    <section className={`${TEAL} px-4 pt-4 pb-6 md:px-6 md:pt-6 md:pb-0`}>
       <div
-        className={`relative overflow-hidden rounded-[28px] md:overflow-visible md:rounded-none ${home ? "min-h-[820px] md:h-[900px]" : "min-h-[320px] md:h-[380px]"}`}
+        className={`relative overflow-hidden rounded-[28px] md:overflow-visible md:rounded-none ${home ? "min-h-[820px] md:h-[900px]" : "md:h-[380px]"}`}
       >
         <Back parallax={home}>
           {/* Phone: the plain gradient. It reaches above the hero so it can slide without a gap. */}
@@ -153,7 +167,7 @@ export function HeroFrame({
             <path d={home ? HOME_SHAPE : INNER_SHAPE} fill={`url(#hero-fill-${variant})`} />
           </svg>
         </Back>
-        <HeroHeader nav={nav} />
+        <HeroHeader nav={nav} active={active} />
         {children}
         {home && bottomLink ? (
           <a
@@ -215,7 +229,7 @@ export function SiteFooter({ footer }: { footer: LandingCopy["footer"] }) {
             <Wordmark className="text-[40px]" />
             <p className="text-[#d3f6e7]">{footer.tagline}</p>
           </div>
-          <div className="flex flex-wrap gap-16">
+          <div className="flex flex-col gap-8 md:flex-row md:flex-wrap md:gap-16">
             {column("Product", footer.product)}
             {column("Company", footer.company)}
             {column("Legal", footer.legal)}

@@ -2,6 +2,7 @@
 
 import { AnimatePresence, motion } from "motion/react";
 import { Search, X } from "lucide-react";
+import { SearchIcon } from "@/components/public/figma-icons";
 import Link from "next/link";
 import { useState } from "react";
 import { useReduceMotion } from "@/components/public/parallax";
@@ -123,13 +124,13 @@ export function DesktopHeaderSearch({ logIn }: { logIn: string }) {
   );
 }
 
-/** Phone: the icon sits beside the menu button; the input slides out to its left. */
+/** Phone: the icon sits where the design's header has room; the input slides out to its left. */
 export function MobileHeaderSearch() {
   const s = useSearch();
   return (
     <>
       <div
-        className={`absolute top-4 right-[10.4rem] left-[6.5rem] z-10 flex h-11 items-center justify-end overflow-hidden md:hidden ${s.open ? "" : "pointer-events-none"}`}
+        className={`absolute top-1/2 right-[6.5rem] left-[5.25rem] z-10 flex h-11 -translate-y-1/2 items-center justify-end overflow-hidden px-1 md:hidden ${s.open ? "" : "pointer-events-none"}`}
       >
         <Field s={s} size="mobile" />
       </div>
@@ -139,9 +140,9 @@ export function MobileHeaderSearch() {
         aria-expanded={s.open}
         onMouseDown={(e) => e.preventDefault()}
         onClick={() => (s.open ? s.escape() : s.show())}
-        className={`${ICON_BUTTON} absolute top-4 right-[7.1rem] z-10 size-11 rounded-full bg-[var(--ollo-teal-900)] text-white md:hidden`}
+        className={`${ICON_BUTTON} absolute top-1/2 right-[3.5rem] z-10 size-11 -translate-y-1/2 text-[var(--ollo-ink-900)] md:hidden`}
       >
-        <Search className="size-5" aria-hidden="true" />
+        <SearchIcon />
       </button>
     </>
   );

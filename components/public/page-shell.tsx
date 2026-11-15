@@ -10,27 +10,30 @@ export function PublicPage({
   live,
   title,
   subtitle,
+  active,
   children,
 }: {
   live: boolean;
   title: string;
   subtitle?: string;
+  /** The page's own nav link, shown bold. */
+  active?: string;
   children: ReactNode;
 }) {
   const copy = getCopy(live);
   return (
     <div className={`${TEAL} text-[var(--ollo-ink-900)]`}>
       <main>
-        <HeroFrame nav={copy.nav} variant="inner">
-          <div className="relative flex flex-col gap-4 px-6 pt-20 pb-12 md:max-w-[820px] md:px-[88px] md:pt-[170px] md:pb-0">
-            <h1 className="text-4xl leading-tight font-bold tracking-tight md:text-[56px]">
+        <HeroFrame nav={copy.nav} variant="inner" active={active}>
+          <div className="relative mt-14 flex flex-col gap-4 px-5 pb-8 md:mt-0 md:max-w-[956px] md:pt-[140px] md:pr-0 md:pb-0 md:pl-[136px]">
+            <h1 className="text-4xl leading-10 font-bold md:text-[56px] md:leading-[60px]">
               {title}
             </h1>
-            {subtitle ? <p className="text-xl">{subtitle}</p> : null}
+            {subtitle ? <p className="text-base md:text-xl md:leading-[30px]">{subtitle}</p> : null}
           </div>
         </HeroFrame>
-        <div className="bg-[var(--ollo-surface)] px-4 py-16 md:px-40 md:py-24">
-          <div className="mx-auto flex max-w-[1120px] flex-col gap-16">{children}</div>
+        <div className="rounded-t-[40px] bg-[var(--ollo-surface)] px-4 py-12 md:px-40 md:py-24">
+          <div className="mx-auto flex max-w-[1120px] flex-col gap-12 md:gap-16">{children}</div>
         </div>
         <JoinBand join={copy.join} />
       </main>
@@ -54,15 +57,17 @@ export function PrimaryLink({ href, children }: { href: string; children: ReactN
 export async function LivePage({
   title,
   subtitle,
+  active,
   children,
 }: {
   title: string;
   subtitle?: string;
+  active?: string;
   children: ReactNode;
 }) {
   await connection();
   return (
-    <PublicPage live={getEnv().PAYMENTS_LIVE} title={title} subtitle={subtitle}>
+    <PublicPage live={getEnv().PAYMENTS_LIVE} title={title} subtitle={subtitle} active={active}>
       {children}
     </PublicPage>
   );

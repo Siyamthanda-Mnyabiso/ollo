@@ -2,7 +2,10 @@ import { LEGAL_NOTICE, LEGAL_PLACEHOLDER, type LegalPage } from "@/lib/public/pa
 
 const slug = (n: number) => `section-${n + 1}`;
 
-/** Terms and Privacy share one layout: a contents list and numbered sections. Text is placeholder. */
+/**
+ * Terms and Privacy share one layout, as in the Figma frames: a draft notice, a contents card and
+ * numbered sections whose text is drawn as grey placeholder lines until the lawyer's wording arrives.
+ */
 export function LegalBody({ page }: { page: LegalPage }) {
   return (
     <>
@@ -14,25 +17,31 @@ export function LegalBody({ page }: { page: LegalPage }) {
         <p className="font-bold">{LEGAL_NOTICE.title}</p>
         <p>{LEGAL_NOTICE.body}</p>
       </div>
-      <div className="grid gap-6 md:grid-cols-[320fr_776fr]">
-        <nav
-          aria-label="On this page"
-          className="flex flex-col gap-4 self-start rounded-3xl bg-white p-6"
-        >
-          <p className="text-xl font-bold">On this page</p>
+      <div className="grid gap-6 md:grid-cols-[320fr_776fr] md:items-start">
+        <nav aria-label="On this page" className="flex flex-col gap-4 rounded-3xl bg-white p-6">
+          <p className="text-xl leading-7 font-bold">On this page</p>
           {page.sections.map((s, i) => (
-            <a key={s} href={`#${slug(i)}`} className={i === 0 ? "font-bold" : ""}>
+            <a
+              key={s}
+              href={`#${slug(i)}`}
+              className={i === 0 ? "font-bold text-[#007a4d]" : "text-[var(--ollo-ink-500)]"}
+            >
               {i + 1}. {s}
             </a>
           ))}
         </nav>
-        <div className="flex flex-col gap-8 rounded-[32px] bg-white p-8 md:p-10">
+        <div className="flex flex-col gap-8 rounded-[32px] bg-white p-6 md:gap-8 md:p-10">
           {page.sections.map((s, i) => (
             <section key={s} id={slug(i)} className="flex scroll-mt-6 flex-col gap-3">
-              <h2 className="text-2xl font-bold">
+              <h2 className="text-2xl leading-[34px] font-bold">
                 {i + 1}. {s}
               </h2>
-              <p className="text-[var(--ollo-ink-500)]">{LEGAL_PLACEHOLDER}</p>
+              <p className="sr-only">{LEGAL_PLACEHOLDER}</p>
+              <span aria-hidden="true" className="flex flex-col gap-3">
+                <span className="h-3 rounded-md bg-[#d5dde3]" />
+                <span className="h-3 rounded-md bg-[#d5dde3]" />
+                <span className="h-3 w-[200px] rounded-md bg-[#d5dde3] md:w-[360px]" />
+              </span>
             </section>
           ))}
         </div>

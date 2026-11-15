@@ -8,7 +8,7 @@ export const metadata = { title: "Help centre" };
 export default function Page() {
   return (
     <Suspense fallback={null}>
-      <LivePage title={HELP.hero.title}>
+      <LivePage active="/help" title={HELP.hero.title}>
         <HelpBody />
       </LivePage>
     </Suspense>
