@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
 import { pollIdentity, retryIdentity } from "@/app/(onboarding)/onboarding/actions";
 import { CtaButton, FormError } from "./ui";
 
@@ -14,7 +13,6 @@ export function IdentityStatus({
   initial: "checking" | "verified" | "failed";
   failureMessage?: string;
 }) {
-  const router = useRouter();
   const [status, setStatus] = useState(initial);
   const [message, setMessage] = useState(failureMessage);
 
@@ -27,14 +25,13 @@ export function IdentityStatus({
       if (next.status === "verified" || next.status === "failed") {
         setStatus(next.status);
         setMessage(next.message);
-        router.refresh();
       }
     }, 2000);
     return () => {
       cancelled = true;
       clearInterval(timer);
     };
-  }, [status, router]);
+  }, [status]);
 
   if (status === "checking") {
     return (

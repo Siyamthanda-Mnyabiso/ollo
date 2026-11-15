@@ -3,7 +3,6 @@
 import { redirect } from "next/navigation";
 import { requestOtp, verifyOtp } from "@/lib/auth/server";
 import { otpSchema, zaPhoneSchema } from "@/lib/auth/phone";
-import { getSellerByUserId } from "@/lib/sellers/queries";
 
 export interface SignInState {
   step: "phone" | "code";
@@ -29,14 +28,12 @@ export async function checkCode(prev: SignInState, formData: FormData): Promise<
   if (!phone) return { step: "phone" };
   const code = otpSchema.safeParse(formData.get("code"));
   if (!code.success) return { step: "code", phone, error: "Enter the 6 digit code" };
-  let userId: string | undefined;
   try {
-    const { user } = await verifyOtp(phone, code.data);
-    userId = user?.id;
+    await verifyOtp(phone, code.data);
   } catch {
     return { step: "code", phone, error: "That code is not right or has expired" };
   }
-  if (userId && (await getSellerByUserId(userId))) redirect("/dashboard");
+  // The onboarding index sends finished sellers to the dashboard and others to the step they left.
   redirect("/onboarding");
 }
 

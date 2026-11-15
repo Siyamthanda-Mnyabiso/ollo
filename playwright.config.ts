@@ -11,7 +11,9 @@ export default defineConfig({
     { name: "mobile", use: { ...devices["Pixel 7"] } },
   ],
   webServer: {
-    command: "pnpm dev",
+    // E2E_PROD=1 tests the production build, which has no first-visit compile delays.
+    command: process.env.E2E_PROD ? "pnpm build && pnpm start" : "pnpm dev",
+    timeout: 300_000,
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,
   },

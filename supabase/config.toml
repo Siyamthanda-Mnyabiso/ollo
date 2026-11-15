@@ -7,7 +7,7 @@ project_id = "ollo"
 [api]
 enabled = true
 # Port to use for the API URL.
-port = 54321
+port = 54421
 # Schemas to expose in your API. Tables, views and stored procedures in this schema will get API
 # endpoints. `public` and `graphql_public` schemas are included by default.
 schemas = ["public", "graphql_public"]
@@ -31,9 +31,9 @@ enabled = false
 
 [db]
 # Port to use for the local database URL.
-port = 54322
+port = 54422
 # Port used by db diff command to initialize the shadow database.
-shadow_port = 54320
+shadow_port = 54420
 # Maximum amount of time to wait for health check when starting the local database.
 health_timeout = "2m"
 # The database major version to use. This has to be the same as your remote database's. Run `SHOW
@@ -43,7 +43,7 @@ major_version = 17
 [db.pooler]
 enabled = false
 # Port to use for the local connection pooler.
-port = 54329
+port = 54429
 # Specifies when a server connection can be reused by other clients.
 # Configure one of the supported pooler modes: `transaction`, `session`.
 pool_mode = "transaction"
@@ -93,7 +93,7 @@ enabled = true
 [studio]
 enabled = true
 # Port to use for Supabase Studio.
-port = 54323
+port = 54423
 # External URL of the API server that frontend connects to.
 api_url = "http://127.0.0.1"
 # OpenAI API Key to use for Supabase AI in the Supabase Studio.
@@ -104,7 +104,7 @@ openai_api_key = "env(OPENAI_API_KEY)"
 [local_smtp]
 enabled = true
 # Port to use for the email testing server web interface.
-port = 54324
+port = 54424
 # Uncomment to expose additional ports for testing user applications that send emails.
 # smtp_port = 54325
 # pop3_port = 54326
@@ -261,12 +261,52 @@ enable_confirmations = false
 # Template for sending OTP to users
 template = "Your code is {{ .Code }}"
 # Controls the minimum amount of time that must pass before sending another sms otp.
-max_frequency = "5s"
+max_frequency = "1s"
 
 # Use pre-defined map of phone number to OTP for testing.
 # Local development only: this number always accepts code 123456, so no SMS provider is needed.
 [auth.sms.test_otp]
 27821234567 = "123456"
+27821234501 = "123456"
+27821234502 = "123456"
+27821234503 = "123456"
+27821234504 = "123456"
+27821234505 = "123456"
+27821234506 = "123456"
+27821234507 = "123456"
+27821234508 = "123456"
+27821234509 = "123456"
+27821234510 = "123456"
+27821234511 = "123456"
+27821234512 = "123456"
+27821234513 = "123456"
+27821234514 = "123456"
+27821234515 = "123456"
+27821234516 = "123456"
+27821234517 = "123456"
+27821234518 = "123456"
+27821234519 = "123456"
+27821234520 = "123456"
+27821234521 = "123456"
+27821234522 = "123456"
+27821234523 = "123456"
+27821234524 = "123456"
+27821234525 = "123456"
+27821234526 = "123456"
+27821234527 = "123456"
+27821234528 = "123456"
+27821234529 = "123456"
+27821234530 = "123456"
+27821234531 = "123456"
+27821234532 = "123456"
+27821234533 = "123456"
+27821234534 = "123456"
+27821234535 = "123456"
+27821234536 = "123456"
+27821234537 = "123456"
+27821234538 = "123456"
+27821234539 = "123456"
+27821234540 = "123456"
 
 # Configure logged in session timeouts.
 # [auth.sessions]
@@ -287,9 +327,9 @@ max_frequency = "5s"
 
 # Configure one of the supported SMS providers: `twilio`, `twilio_verify`, `messagebird`, `textlocal`, `vonage`.
 [auth.sms.twilio]
-enabled = false
-account_sid = ""
-message_service_sid = ""
+enabled = true
+account_sid = "local-dev-placeholder"
+message_service_sid = "local-dev-placeholder"
 # DO NOT commit your Twilio auth token to git. Use environment variable substitution instead:
 auth_token = "env(SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN)"
 
@@ -387,7 +427,7 @@ deno_version = 2
 
 [analytics]
 enabled = true
-port = 54327
+port = 54427
 # Configure one of the supported backends: `postgres`, `bigquery`.
 backend = "postgres"
 

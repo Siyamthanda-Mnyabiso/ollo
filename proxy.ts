@@ -1,3 +1,4 @@
+import { isAdminUser } from "@/lib/auth/roles";
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
@@ -43,11 +44,7 @@ export async function proxy(request: NextRequest) {
     url.pathname = "/onboarding";
     return NextResponse.redirect(url);
   }
-  if (
-    user &&
-    (pathname === "/admin" || pathname.startsWith("/admin/")) &&
-    user.app_metadata?.role !== "admin"
-  ) {
+  if (user && (pathname === "/admin" || pathname.startsWith("/admin/")) && !isAdminUser(user)) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     return NextResponse.redirect(url);

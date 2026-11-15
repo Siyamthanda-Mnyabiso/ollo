@@ -2,11 +2,14 @@ import "server-only";
 import { createServerClient } from "@supabase/ssr";
 import { createClient } from "@supabase/supabase-js";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { getEnv } from "@/lib/env";
 import { otpSchema, zaPhoneSchema } from "./phone";
 
 /** Supabase client acting as the signed-in user (anon key, RLS applies). */
 export async function createSupabaseServerClient() {
+  // Signed-in work is per request, so mark it dynamic before anything reads the clock.
+  await connection();
   const env = getEnv();
   const cookieStore = await cookies();
   return createServerClient(

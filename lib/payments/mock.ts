@@ -113,8 +113,12 @@ export class MockProvider implements PaymentProvider {
     return result;
   }
 
-  /** Account numbers ending 0000 are not found; a holder containing MISMATCH fails the name check. */
+  /**
+   * Account numbers ending 0000 are not found, ending 9999 simulate an outage, and a holder
+   * containing MISMATCH fails the name check.
+   */
   async verifyBankAccount(input: VerifyBankAccountInput): Promise<VerifyBankAccountResult> {
+    if (input.accountNumber.endsWith("9999")) return { verified: false, reason: "unavailable" };
     if (input.accountNumber.endsWith("0000"))
       return { verified: false, reason: "account_not_found" };
     if (input.accountHolder.toUpperCase().includes("MISMATCH"))
