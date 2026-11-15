@@ -1,8 +1,8 @@
 import { connection } from "next/server";
 import { Suspense } from "react";
-import { PricingSection, PublicHeader } from "@/components/public/landing";
+import { PricingSection, PublicHeader } from "@/components/public/pricing";
 import { getEnv } from "@/lib/env";
-import { getCopy } from "@/lib/public/copy";
+import { getPricingCopy } from "@/lib/public/copy";
 
 export const metadata = { title: "Pricing" };
 
@@ -14,7 +14,7 @@ async function PricingContent() {
     <div className="bg-background min-h-screen">
       <PublicHeader live={live} />
       <main>
-        <PricingSection pricing={getCopy(live).pricing} />
+        <PricingSection pricing={getPricingCopy(live)} />
       </main>
     </div>
   );

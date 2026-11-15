@@ -15,20 +15,23 @@ for (const path of ["/dashboard", "/onboarding", "/onboarding/profile", "/admin"
   });
 }
 
-test("with PAYMENTS_LIVE off, the landing page says Launching January and has no shop wording", async ({
+test("with PAYMENTS_LIVE off, the home page says Launching January and collects sign-ups", async ({
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Launching January", level: 1 })).toBeVisible();
-  await expect(page.getByLabel("Cellphone number")).toBeVisible();
-  await expect(page.getByText("no business registration")).toBeVisible();
   await expect(
-    page.getByRole("heading", { name: "How it works" }).or(page.getByText("Step 1")),
+    page.getByRole("heading", { name: "Get paid for what you sell online" }),
   ).toBeVisible();
-  await expect(page.getByRole("heading", { name: "How fast will I get paid?" })).toBeVisible();
+  await expect(page.getByText("Launching January", { exact: true })).toBeVisible();
+  await expect(page.getByRole("link", { name: "Join as a founding seller" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Join as a founding seller" })).toBeVisible();
+  await expect(page.getByLabel("Cellphone number")).toBeVisible();
+  await expect(page.getByRole("heading", { name: "How Ollo works" })).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "Everything you need to get paid" }),
+  ).toBeVisible();
+  await expect(page.getByText(/\b(shop|store)\b/i)).toHaveCount(0);
   await expect(page.getByText("Public marketing pages live in this route group.")).toHaveCount(0);
-  await expect(page.getByText(/\bshop\b|\bstore\b/i)).toHaveCount(0);
-  await expect(page.getByRole("link", { name: "Sign in" })).toHaveCount(0);
 });
 
 test("pricing shows the fees", async ({ page }) => {

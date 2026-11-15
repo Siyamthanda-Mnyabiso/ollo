@@ -26,12 +26,12 @@ export function DashboardShell({ children }: { children: ReactNode }) {
           <Link href="/dashboard">
             <Wordmark />
           </Link>
-          <nav aria-label="Dashboard" className="flex gap-1">
+          <nav aria-label="Dashboard" className="flex max-w-full min-w-0 gap-1 overflow-x-auto">
             {NAV.map((n) => (
               <Link
                 key={n.href}
                 href={n.href}
-                className="text-foreground hover:bg-accent rounded-lg px-3 py-2 text-base font-semibold"
+                className="text-foreground hover:bg-accent rounded-lg px-3 py-2 text-base font-semibold whitespace-nowrap"
               >
                 {n.label}
               </Link>

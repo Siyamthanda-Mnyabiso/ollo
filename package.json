@@ -19,7 +19,7 @@
     "db:studio": "drizzle-kit studio",
     "verify": "pnpm typecheck && pnpm lint && pnpm test",
     "local": "bash scripts/local.sh",
-    "seed:demo": "tsx --conditions react-server --tsconfig tsconfig.json scripts/seed-demo.ts",
+    "seed:demo": "tsx --conditions react-server scripts/seed-demo.mts",
     "make-admin": "node scripts/make-admin.mjs"
   },
   "dependencies": {
