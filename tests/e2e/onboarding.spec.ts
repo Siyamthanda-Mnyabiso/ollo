@@ -1,5 +1,15 @@
-import { expect, test, type Page } from "@playwright/test";
-import postgres from "postgres";
+import { expect, test } from "@playwright/test";
+import {
+  nextPhone,
+  reachBankStep,
+  reachVerifyStep,
+  resetSeller,
+  signIn,
+  signOut,
+  sql,
+  submitBank,
+  submitId,
+} from "./helpers";
 
 /**
  * These tests sign in for real, so they need a Supabase project with the test OTP numbers from
@@ -11,89 +21,11 @@ test.describe.configure({ mode: "serial" });
 // The first request to each page compiles it in dev, which can take a while.
 test.setTimeout(60_000);
 
-const VALID_ID = "8001015009087";
-const sql = process.env.DATABASE_URL ? postgres(process.env.DATABASE_URL, { max: 1 }) : null;
-
-// Each test gets its own test number (4501 to 4540 in config.toml) so tests never share a seller.
-const phoneFor = (project: string, n: number) =>
-  `082123${4500 + n + (project === "mobile" ? 20 : 0)}`;
-
-async function resetSeller(phone: string) {
-  if (!sql) return;
-  const e164 = "27" + phone.replace(/\D/g, "").slice(1);
-  const users = await sql`select id from auth.users where phone = ${e164}`;
-  for (const u of users) {
-    await sql`delete from audit_log where actor = ${u.id}`;
-    await sql`delete from sellers where user_id = ${u.id}`;
-    await sql`delete from auth.users where id = ${u.id}`;
-  }
-}
-
-async function signIn(page: Page, phone: string) {
-  await page.goto("/sign-in");
-  await page.getByLabel(/phone/i).fill(phone);
-  await page.getByRole("button", { name: "Send code" }).click();
-  await page.getByLabel(/code/i).fill("123456");
-  await page.getByRole("button", { name: "Continue" }).click();
-}
-
-async function signOut(page: Page) {
-  await page.context().clearCookies();
-}
-
-/** Signs in as a new seller and completes the profile, business and link steps. */
-async function reachVerifyStep(page: Page, phone: string, fullName = "Thandi Ndlovu") {
-  await signIn(page, phone);
-  await page.waitForURL("**/onboarding/profile");
-  await page.getByLabel("Full name").fill(fullName);
-  await page.getByLabel("Shop name").fill("Thandi Treats");
-  await page.getByLabel("Food and baking").check();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.waitForURL("**/onboarding/business");
-  await page.getByLabel("Instagram").check();
-  await page.getByLabel("Under R5k").check();
-  await page.getByLabel("Cash").check();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.waitForURL("**/onboarding/link");
-  await expect(page.getByRole("button", { name: "Continue" })).toBeEnabled();
-  await page.getByRole("button", { name: "Continue" }).click();
-  await page.waitForURL("**/onboarding/verify");
-}
-
-async function submitId(page: Page, idNumber = VALID_ID) {
-  await page.getByLabel("ID number").fill(idNumber);
-  await page.getByLabel("Selfie").setInputFiles({
-    name: "selfie.jpg",
-    mimeType: "image/jpeg",
-    buffer: Buffer.from([0xff, 0xd8, 0xff, 0xd9]),
-  });
-  await page.getByRole("button", { name: "Check my ID" }).click();
-}
-
-async function reachBankStep(page: Page, phone: string) {
-  await reachVerifyStep(page, phone);
-  await submitId(page);
-  await expect(page.getByText("Your ID is verified")).toBeVisible({ timeout: 15_000 });
-  await page.getByRole("link", { name: "Continue" }).click();
-  await page.waitForURL("**/onboarding/bank");
-}
-
-async function submitBank(page: Page, account: string, holder?: string) {
-  await page.getByLabel("Bank", { exact: true }).selectOption("Capitec");
-  await page.getByLabel("Account number").fill(account);
-  if (holder) await page.getByLabel("Account holder name").fill(holder);
-  await page.getByRole("button", { name: "Check and save" }).click();
-}
-
-let testNumber = 0;
 let phone = "";
 test.beforeEach(async ({ page }, testInfo) => {
-  phone = phoneFor(testInfo.project.name, ++testNumber);
+  phone = nextPhone(testInfo.project.name);
   await resetSeller(phone);
   await page.context().clearCookies();
-});
-test.afterAll(async () => {
-  await sql?.end();
 });
 
 test.describe("ID step", () => {

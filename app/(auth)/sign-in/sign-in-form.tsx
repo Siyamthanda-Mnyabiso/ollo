@@ -1,6 +1,7 @@
 "use client";
 
 import { useActionState } from "react";
+import { keepForm } from "@/components/keep-form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { CtaButton, FormError } from "@/components/onboarding/ui";
@@ -9,7 +10,7 @@ import { checkCode, resendCode, sendCode, type SignInState } from "./actions";
 export function SignInForm() {
   const [state, send, sending] = useActionState<SignInState, FormData>(sendCode, { step: "phone" });
   return state.step === "phone" ? (
-    <form action={send} className="space-y-5" noValidate>
+    <form onSubmit={keepForm(send)} className="space-y-5" noValidate>
       <FormError message={state.error} />
       <div>
         <Label htmlFor="phone" className="mb-1.5 block font-bold">
@@ -52,7 +53,7 @@ function CodeForm({ state }: { state: SignInState }) {
   const error = current.error ?? resent.error;
   return (
     <div className="space-y-5">
-      <form action={verify} className="space-y-5" noValidate>
+      <form onSubmit={keepForm(verify)} className="space-y-5" noValidate>
         <FormError message={error} />
         <div>
           <Label htmlFor="code" className="mb-1.5 block font-bold">

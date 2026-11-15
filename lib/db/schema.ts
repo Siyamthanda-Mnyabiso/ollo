@@ -223,6 +223,8 @@ export const payments = rlsTable(
       .notNull()
       .references(() => sellers.id),
     source: paymentSourceEnum("source").notNull(),
+    /** Set when the payment is for a payment request. */
+    requestId: uuid("request_id").references(() => paymentRequests.id),
     amountCents: integer("amount_cents").notNull(),
     feeCents: integer("fee_cents").notNull(),
     method: paymentMethodEnum("method").notNull(),

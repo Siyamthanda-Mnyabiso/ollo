@@ -1,5 +1,6 @@
 "use client";
 
+import { keepForm } from "@/components/keep-form";
 import Link from "next/link";
 import { useActionState, useEffect, useRef, useState } from "react";
 import { Input } from "@/components/ui/input";
@@ -24,7 +25,7 @@ export function LinkForm({ initialHandle, domain }: { initialHandle: string; dom
   }, [handle]);
 
   return (
-    <form action={action} className="space-y-5" noValidate>
+    <form onSubmit={keepForm(action)} className="space-y-5" noValidate>
       <FormError message={state.error} />
       <div>
         <Label htmlFor="handle" className="mb-1.5 block font-bold">

@@ -1,5 +1,6 @@
 "use client";
 
+import { keepForm } from "@/components/keep-form";
 import { useActionState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -14,7 +15,7 @@ export function ProfileForm({
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(saveProfile, {});
   return (
-    <form action={action} className="space-y-5" noValidate>
+    <form onSubmit={keepForm(action)} className="space-y-5" noValidate>
       <FormError message={state.error} />
       <div>
         <Label htmlFor="fullName" className="mb-1.5 block font-bold">

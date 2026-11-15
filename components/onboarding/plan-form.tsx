@@ -1,5 +1,6 @@
 "use client";
 
+import { keepForm } from "@/components/keep-form";
 import { useActionState } from "react";
 import { PLAN_OPTIONS } from "@/lib/sellers/options";
 import { savePlan, type ActionState } from "@/app/(onboarding)/onboarding/actions";
@@ -8,7 +9,7 @@ import { CtaButton, FieldError, FormError } from "./ui";
 export function PlanForm() {
   const [state, action, pending] = useActionState<ActionState, FormData>(savePlan, {});
   return (
-    <form action={action} className="space-y-4" noValidate>
+    <form onSubmit={keepForm(action)} className="space-y-4" noValidate>
       <FormError message={state.error} />
       <fieldset className="grid gap-3">
         <legend className="sr-only">Plan</legend>

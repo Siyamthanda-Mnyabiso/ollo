@@ -5,11 +5,6 @@ test("home renders", async ({ page }) => {
   await expect(page.getByRole("heading", { name: "Ollo" })).toBeVisible();
 });
 
-test("pay page placeholder renders for any handle", async ({ page }) => {
-  await page.goto("/thandihair");
-  await expect(page.getByRole("heading", { name: "Pay page" })).toBeVisible();
-});
-
 test("sign-in asks for a phone number and rejects a bad one", async ({ page }) => {
   await page.goto("/sign-in");
   await expect(page.getByRole("heading", { name: "Enter your phone number" })).toBeVisible();

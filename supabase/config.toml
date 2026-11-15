@@ -196,8 +196,8 @@ password_requirements = ""
 [auth.rate_limit]
 # Number of emails that can be sent per hour. Requires auth.email.smtp to be enabled.
 email_sent = 2
-# Number of SMS messages that can be sent per hour. Requires auth.sms to be enabled.
-sms_sent = 30
+# Number of SMS messages that can be sent per hour. Raised for local end-to-end tests, which sign in many times.
+sms_sent = 1000
 # Number of anonymous sign-ins that can be made per hour per IP address. Requires enable_anonymous_sign_ins = true.
 anonymous_users = 30
 # Number of sessions that can be refreshed in a 5 minute interval per IP address.
@@ -307,6 +307,35 @@ max_frequency = "1s"
 27821234538 = "123456"
 27821234539 = "123456"
 27821234540 = "123456"
+27821234541 = "123456"
+27821234542 = "123456"
+27821234543 = "123456"
+27821234544 = "123456"
+27821234545 = "123456"
+27821234546 = "123456"
+27821234547 = "123456"
+27821234548 = "123456"
+27821234549 = "123456"
+27821234550 = "123456"
+27821234551 = "123456"
+27821234552 = "123456"
+27821234553 = "123456"
+27821234554 = "123456"
+27821234555 = "123456"
+27821234556 = "123456"
+27821234557 = "123456"
+27821234558 = "123456"
+27821234559 = "123456"
+27821234560 = "123456"
+27821234561 = "123456"
+27821234562 = "123456"
+27821234563 = "123456"
+27821234564 = "123456"
+27821234565 = "123456"
+27821234566 = "123456"
+27821234568 = "123456"
+27821234569 = "123456"
+27821234570 = "123456"
 
 # Configure logged in session timeouts.
 # [auth.sessions]

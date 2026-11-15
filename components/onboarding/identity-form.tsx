@@ -1,5 +1,6 @@
 "use client";
 
+import { keepForm } from "@/components/keep-form";
 import { useActionState } from "react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -9,7 +10,7 @@ import { CtaButton, FieldError, FormError } from "./ui";
 export function IdentityForm({ notice }: { notice?: string }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(submitIdentity, {});
   return (
-    <form action={action} className="space-y-5" noValidate>
+    <form onSubmit={keepForm(action)} className="space-y-5" noValidate>
       <FormError message={state.error ?? notice} />
       <div>
         <Label htmlFor="idNumber" className="mb-1.5 block font-bold">

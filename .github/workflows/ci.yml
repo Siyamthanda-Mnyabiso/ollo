@@ -16,3 +16,51 @@ jobs:
           cache: pnpm
       - run: pnpm install --frozen-lockfile
       - run: pnpm verify
+
+  # Signs in for real against a throwaway local Supabase (test OTP numbers from supabase/config.toml),
+  # so no SMS is sent and no hosted project is touched.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - uses: supabase/setup-cli@v1
+        with:
+          version: latest
+      - name: Start local Supabase
+        env:
+          SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN: local-dev
+        run: supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta
+      - name: Export local connection details
+        env:
+          SUPABASE_AUTH_SMS_TWILIO_AUTH_TOKEN: local-dev
+        run: |
+          status="$(supabase status -o json)"
+          {
+            echo "NEXT_PUBLIC_APP_URL=http://localhost:3000"
+            echo "NEXT_PUBLIC_SUPABASE_URL=$(echo "$status" | jq -r .API_URL)"
+            echo "NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY=$(echo "$status" | jq -r .PUBLISHABLE_KEY)"
+            echo "SUPABASE_SERVICE_ROLE_KEY=$(echo "$status" | jq -r .SECRET_KEY)"
+            echo "DATABASE_URL=$(echo "$status" | jq -r .DB_URL)"
+            echo "FIELD_ENCRYPTION_KEY=$(openssl rand -base64 32)"
+            echo "PAYMENT_PROVIDER=mock"
+            echo "MOCK_PAYMENT_SCENARIO=success"
+            echo "MOCK_WEBHOOK_SECRET=mock-webhook-secret"
+            echo "E2E_AUTH=1"
+            echo "E2E_PROD=1"
+          } >> "$GITHUB_ENV"
+      - run: pnpm db:migrate
+      - run: pnpm check:supabase
+      - run: pnpm exec playwright install --with-deps chromium
+      - run: pnpm test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-results
+          path: test-results/

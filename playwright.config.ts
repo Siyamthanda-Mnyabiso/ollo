@@ -2,7 +2,9 @@ import { defineConfig, devices } from "@playwright/test";
 
 export default defineConfig({
   testDir: "./tests/e2e",
-  fullyParallel: true,
+  // The signed-in tests share one database and a few test phone numbers, so they run one at a time.
+  fullyParallel: process.env.E2E_AUTH !== "1",
+  workers: process.env.E2E_AUTH === "1" ? 1 : undefined,
   retries: process.env.CI ? 2 : 0,
   reporter: process.env.CI ? "github" : "list",
   use: { baseURL: "http://localhost:3000", trace: "on-first-retry" },

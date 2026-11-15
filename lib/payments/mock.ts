@@ -89,7 +89,9 @@ export class MockProvider implements PaymentProvider {
   }
 
   async getPaymentStatus(providerReference: string): Promise<PaymentStatusResult> {
-    if (!this.byReference.has(providerReference)) {
+    // References are made by this mock, and the instance that made one is not always the one asked
+    // (separate server bundles each hold their own), so a mock_pay_ reference counts as known.
+    if (!this.byReference.has(providerReference) && !providerReference.startsWith("mock_pay_")) {
       return { providerReference, status: "failed", failureReason: "unknown_reference" };
     }
     switch (this.options.scenario) {

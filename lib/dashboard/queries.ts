@@ -1,0 +1,84 @@
+import "server-only";
+import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { redirect } from "next/navigation";
+import { getCurrentUser } from "@/lib/auth/server";
+import { db } from "@/lib/db";
+import { items, paymentRequests, payments } from "@/lib/db/schema";
+import { getSellerByUserId } from "@/lib/sellers/queries";
+
+/** The signed-in seller, who has finished onboarding. Anyone else is sent where they belong. */
+export async function requireSeller() {
+  const user = await getCurrentUser();
+  if (!user) redirect("/sign-in");
+  const seller = await getSellerByUserId(user.id);
+  if (!seller?.onboardedAt) redirect("/onboarding");
+  return { user, seller };
+}
+
+export const RANGES = {
+  today: { label: "Today", days: 0 },
+  "7d": { label: "7 days", days: 7 },
+  "30d": { label: "30 days", days: 30 },
+} as const;
+export type RangeKey = keyof typeof RANGES;
+
+export function parseRange(value: string | undefined): RangeKey {
+  return value && value in RANGES ? (value as RangeKey) : "7d";
+}
+
+function since(range: RangeKey) {
+  const d = new Date();
+  if (RANGES[range].days === 0) d.setHours(0, 0, 0, 0);
+  else d.setTime(d.getTime() - RANGES[range].days * 24 * 60 * 60 * 1000);
+  return d;
+}
+
+/** Money in for a period: what customers paid, the Ollo fee, and what the seller keeps. */
+export async function getMoneyIn(sellerId: string, range: RangeKey) {
+  const [row] = await db
+    .select({
+      count: sql<number>`count(*)::int`,
+      grossCents: sql<number>`coalesce(sum(${payments.amountCents}), 0)::bigint`.mapWith(Number),
+      feeCents: sql<number>`coalesce(sum(${payments.feeCents}), 0)::bigint`.mapWith(Number),
+    })
+    .from(payments)
+    .where(
+      and(
+        eq(payments.sellerId, sellerId),
+        eq(payments.status, "succeeded"),
+        gte(payments.createdAt, since(range)),
+      ),
+    );
+  return { count: row?.count ?? 0, grossCents: row?.grossCents ?? 0, feeCents: row?.feeCents ?? 0 };
+}
+
+export function getRecentPayments(sellerId: string, limit = 8) {
+  return db
+    .select()
+    .from(payments)
+    .where(eq(payments.sellerId, sellerId))
+    .orderBy(desc(payments.createdAt))
+    .limit(limit);
+}
+
+export function listRequests(sellerId: string) {
+  return db
+    .select()
+    .from(paymentRequests)
+    .where(eq(paymentRequests.sellerId, sellerId))
+    .orderBy(desc(paymentRequests.createdAt))
+    .limit(50);
+}
+
+export async function getRequest(sellerId: string, id: string) {
+  const [row] = await db
+    .select()
+    .from(paymentRequests)
+    .where(and(eq(paymentRequests.id, id), eq(paymentRequests.sellerId, sellerId)))
+    .limit(1);
+  return row ?? null;
+}
+
+export function listItems(sellerId: string) {
+  return db.select().from(items).where(eq(items.sellerId, sellerId)).orderBy(desc(items.createdAt));
+}

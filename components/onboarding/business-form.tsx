@@ -1,5 +1,6 @@
 "use client";
 
+import { keepForm } from "@/components/keep-form";
 import Link from "next/link";
 import { useActionState } from "react";
 import { CHANNELS, CURRENT_PAYMENT_METHODS, SALES_RANGES } from "@/lib/sellers/options";
@@ -17,7 +18,7 @@ export function BusinessForm({
 }) {
   const [state, action, pending] = useActionState<ActionState, FormData>(saveBusiness, {});
   return (
-    <form action={action} className="space-y-6" noValidate>
+    <form onSubmit={keepForm(action)} className="space-y-6" noValidate>
       <FormError message={state.error} />
       <fieldset>
         <legend className="mb-1.5 font-bold">Where do you sell?</legend>
