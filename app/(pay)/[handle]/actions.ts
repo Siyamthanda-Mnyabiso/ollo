@@ -14,6 +14,7 @@ import {
   PaymentLimitError,
   startPayment,
 } from "@/lib/payments/service";
+import { PAYMENTS_DISABLED_MESSAGE, PaymentsDisabledError } from "@/lib/payments";
 
 export interface PayFormState {
   error?: string;
@@ -102,6 +103,7 @@ export async function payNow(_prev: PayFormState, formData: FormData): Promise<P
     });
     redirectUrl = result.redirectUrl ?? `${appUrl}/${seller.handle}/done?p=${result.paymentId}`;
   } catch (error) {
+    if (error instanceof PaymentsDisabledError) return { error: PAYMENTS_DISABLED_MESSAGE };
     if (error instanceof PaymentLimitError) {
       return { error: limitMessage(error.check, seller.displayName) };
     }

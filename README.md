@@ -39,6 +39,44 @@ pnpm local pnpm make-admin 0821234567   # after signing in once with that number
 Test phone numbers sign in with code `123456` and send no SMS: 0821234567, and 0821234501 to 0821234590.
 0821234590 is the demo seller. Set `PAYMENTS_LIVE=true` before `pnpm local pnpm dev` to see the live-payments copy.
 
+## Deploy to Vercel
+
+The site deploys from `main`. Every push to `main` makes a production deployment, and every other branch gets a preview.
+
+**Before the first deploy**
+
+1. Use a Supabase project meant for production, not the dev project. Apply the migrations to it with `pnpm db:migrate` (with `DATABASE_URL` pointing at it), then run `pnpm check:supabase`. Every table must show row level security on.
+2. In Vercel, import the repository and set the production branch to `main`. The framework is detected as Next.js and the defaults are right (`pnpm build`).
+3. Add the environment variables below under Settings, Environment Variables, for the Production environment.
+
+| Variable                               | Value                          | Secret |
+| -------------------------------------- | ------------------------------ | ------ |
+| `NEXT_PUBLIC_APP_URL`                  | the live address, with https   | no     |
+| `NEXT_PUBLIC_SUPABASE_URL`             | production project URL         | no     |
+| `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` | production publishable key     | no     |
+| `SUPABASE_SERVICE_ROLE_KEY`            | production secret key          | yes    |
+| `DATABASE_URL`                         | production Postgres connection | yes    |
+| `FIELD_ENCRYPTION_KEY`                 | 32 random bytes, base64        | yes    |
+| `PAYMENTS_LIVE`                        | `false`                        | no     |
+| `PAYMENT_PROVIDER`                     | `disabled`                     | no     |
+
+Do not set `MOCK_PAYMENT_SCENARIO`, `MOCK_WEBHOOK_SECRET` or any `STITCH_*` variable yet. For `DATABASE_URL` use the Supabase connection pooler address (transaction mode), because serverless functions open many short connections. Use the direct address only when running migrations.
+
+`FIELD_ENCRYPTION_KEY` encrypts ID numbers and bank account numbers. Generate it once with `openssl rand -base64 32`, keep a copy in a password manager, and never change it after real data exists: data encrypted with the old key can no longer be read.
+
+**What `PAYMENT_PROVIDER=disabled` does.** The app starts normally and the public pages work. Anything that would create a payment, payout, refund or bank check fails with "Payments are not switched on yet. Nothing was charged and no money moved." The payment webhook answers 503. The app refuses to start if `PAYMENTS_LIVE=true` is set with it, and the mock provider can never run in production.
+
+**Deploy.** Merge to `main` once CI is green. Vercel builds and deploys by itself. Open the production address, click through `/`, `/pricing`, `/about`, `/help`, `/contact`, `/terms` and `/privacy`, and check the mobile layout.
+
+**Changing an environment variable** only takes effect on the next deployment. After editing one in Vercel, redeploy (Deployments, the latest one, Redeploy).
+
+## Roll back
+
+1. **Code.** In Vercel, open Deployments, pick the last good production deployment, and choose Promote to Production (or Instant Rollback). This takes seconds and does not touch the database. Then fix the problem on a branch and merge again. Promoting an older deployment turns off automatic promotion of new ones until you promote a new one, so do that after the fix.
+2. **Git.** To keep `main` in line with what is live, run `git revert <bad commit>` and push. Do not rewrite `main`.
+3. **Database.** Migrations only go forward. Never roll back code across a migration that dropped or renamed something the older code needs. Write a new migration to undo it instead, and test it locally first.
+4. **Switch payments back off.** Set `PAYMENT_PROVIDER=disabled` and `PAYMENTS_LIVE=false`, then redeploy. This stops new payments at once.
+
 ## Scripts
 
 | Script                         | What it does                                                      |

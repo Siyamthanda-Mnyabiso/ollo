@@ -1,4 +1,4 @@
-import { getPaymentProvider, InvalidWebhookError } from "@/lib/payments";
+import { getPaymentProvider, InvalidWebhookError, PaymentsDisabledError } from "@/lib/payments";
 import { settlePayment } from "@/lib/payments/service";
 
 /**
@@ -16,6 +16,8 @@ export async function POST(request: Request) {
   try {
     event = await getPaymentProvider().verifyWebhook(rawBody, headers);
   } catch (error) {
+    if (error instanceof PaymentsDisabledError)
+      return new Response("Payments are not switched on", { status: 503 });
     if (error instanceof InvalidWebhookError)
       return new Response("Invalid signature", { status: 401 });
     return new Response("Bad request", { status: 400 });

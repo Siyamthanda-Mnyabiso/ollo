@@ -1,6 +1,7 @@
 import "server-only";
 import { and, eq, gte, inArray, or, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
+import { getEnv } from "@/lib/env";
 import {
   auditLog,
   ledgerAccounts,
@@ -19,7 +20,7 @@ import {
   type LimitCheck,
 } from "@/lib/limits";
 import { hasPayoutFor, payoutOnConfirmation } from "@/lib/payouts/service";
-import { getPaymentProvider } from "./index";
+import { getPaymentProvider, PaymentsDisabledError } from "./index";
 import { ProviderTimeoutError, type ProviderPaymentStatus } from "./types";
 
 /** Methods a seller accepts. A seller with no saved settings accepts all of them. */
@@ -82,6 +83,8 @@ export interface StartPaymentInput {
 export async function startPayment(
   input: StartPaymentInput,
 ): Promise<{ redirectUrl?: string; paymentId: string }> {
+  // With the disabled provider, stop before anything is written.
+  if (getEnv().PAYMENT_PROVIDER === "disabled") throw new PaymentsDisabledError();
   // A repeat of a payment already started (same key) is not checked again against the day's total.
   const [already] = await db
     .select({ id: payments.id })

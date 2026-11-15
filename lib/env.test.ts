@@ -33,6 +33,34 @@ describe("getEnv", () => {
     ).toThrow(/STITCH_CLIENT_ID/);
   });
 
+  describe("disabled provider", () => {
+    const prod = (extra: Record<string, string>) =>
+      ({
+        ...valid,
+        NODE_ENV: "production",
+        NEXT_PUBLIC_SUPABASE_URL: "https://abcd.supabase.co",
+        PAYMENT_PROVIDER: "disabled",
+        ...extra,
+      }) as unknown as NodeJS.ProcessEnv;
+
+    it("starts in production with payments off", () => {
+      const env = getEnv(prod({ PAYMENTS_LIVE: "false" }));
+      expect(env.PAYMENT_PROVIDER).toBe("disabled");
+      expect(env.PAYMENTS_LIVE).toBe(false);
+    });
+
+    it("starts in production when PAYMENTS_LIVE is left unset", () => {
+      expect(getEnv(prod({})).PAYMENTS_LIVE).toBe(false);
+    });
+
+    it("refuses PAYMENTS_LIVE=true", () => {
+      expect(() => getEnv(prod({ PAYMENTS_LIVE: "true" }))).toThrow(
+        /needs a real payment provider/,
+      );
+      expect(() => getEnv(prod({ PAYMENTS_LIVE: "1" }))).toThrow(/needs a real payment provider/);
+    });
+  });
+
   describe("mock payments in production", () => {
     const prod = (extra: Record<string, string>) =>
       ({ ...valid, NODE_ENV: "production", ...extra }) as unknown as NodeJS.ProcessEnv;

@@ -19,7 +19,7 @@ export const serverEnvSchema = z.object({
     .enum(["true", "false", "1", "0"])
     .default("false")
     .transform((v) => v === "true" || v === "1"),
-  PAYMENT_PROVIDER: z.enum(["mock", "stitch"]).default("mock"),
+  PAYMENT_PROVIDER: z.enum(["mock", "stitch", "disabled"]).default("mock"),
   MOCK_PAYMENT_SCENARIO: z
     .enum(["success", "decline", "timeout", "duplicate_webhook", "late_webhook"])
     .default("success"),
@@ -51,6 +51,11 @@ export function getEnv(source: NodeJS.ProcessEnv = process.env): ServerEnv {
         "PAYMENT_PROVIDER=mock is not allowed when NODE_ENV=production. Set PAYMENT_PROVIDER=stitch.",
       );
     }
+  }
+  if (result.data.PAYMENT_PROVIDER === "disabled" && result.data.PAYMENTS_LIVE) {
+    throw new Error(
+      "PAYMENTS_LIVE=true needs a real payment provider. PAYMENT_PROVIDER=disabled cannot take payments.",
+    );
   }
   if (result.data.PAYMENT_PROVIDER === "stitch") {
     const missing = (

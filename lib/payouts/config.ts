@@ -15,13 +15,20 @@ export const BANK_CHANGE_PAUSE_HOURS = 48;
  * settlement step, so it pays bank methods on confirmation to let the whole flow be clicked through.
  */
 export type PayoutTiming = "on_confirmation" | "on_settlement";
-export type PayoutProvider = "mock" | "stitch";
+export type PayoutProvider = "mock" | "stitch" | "disabled";
 
 export const PAYOUT_TIMING: Record<PayoutProvider, Record<PaymentMethod, PayoutTiming>> = {
   mock: {
     payshap: "on_confirmation",
     capitec_pay: "on_confirmation",
     instant_eft: "on_confirmation",
+    card: "on_settlement",
+  },
+  // Never pays out. The disabled provider cannot take payments, so there is nothing to pay.
+  disabled: {
+    payshap: "on_settlement",
+    capitec_pay: "on_settlement",
+    instant_eft: "on_settlement",
     card: "on_settlement",
   },
   // Change a method to "on_confirmation" here once Stitch confirms it releases funds immediately.

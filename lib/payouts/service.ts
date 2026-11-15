@@ -29,6 +29,8 @@ async function payOut(
   trigger: PayoutTrigger,
 ): Promise<"sent" | "skipped" | "failed"> {
   try {
+    // Nothing can be paid out while payments are disabled.
+    if (getEnv().PAYMENT_PROVIDER === "disabled") return "skipped";
     const [payment] = await db.select().from(payments).where(eq(payments.id, paymentId)).limit(1);
     if (
       !payment ||
