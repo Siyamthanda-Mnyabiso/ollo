@@ -22,6 +22,7 @@ export interface PublicCopy {
     plans: { name: string; price: string; lines: string[] }[];
     minimumFee: string;
   };
+  faq: { question: string; answer: string }[];
   cta: { title: string; body: string };
 }
 
@@ -42,10 +43,41 @@ const pricing = (intro: string): PublicCopy["pricing"] => ({
   minimumFee: `The smallest fee on any payment is R${MINIMUM_FEE_CENTS / 100}.`,
 });
 
+const faq = (live: boolean): PublicCopy["faq"] => [
+  {
+    question: "Do I need a website?",
+    answer:
+      "No. Your pay link opens your pay page, where customers see your name and pay you. There is nothing to build.",
+  },
+  {
+    question: "Do I need a card machine?",
+    answer: "No. Customers pay on their own phone, so you do not need to buy or rent a machine.",
+  },
+  {
+    question: "Do I need a registered business?",
+    answer:
+      "No. You sign up with your ID and a bank account in your own name, and you can add a business later.",
+  },
+  {
+    question: live ? "How fast do I get paid?" : "How fast will I get paid?",
+    answer: live
+      ? "Money from PayShap, Capitec Pay and Instant EFT payments goes to your bank account straight away. Card payments are not paid out instantly."
+      : "At launch, money from bank payments will go to your bank account straight away. Card payments will not be paid out instantly.",
+  },
+  {
+    question: live ? "What does it cost?" : "What will it cost?",
+    answer: `${rate("free", "bank")} on each bank payment and ${rate("free", "card")} on each card payment on the free plan, with no monthly fee. The smallest fee on any payment is R${MINIMUM_FEE_CENTS / 100}.`,
+  },
+  {
+    question: "Can I refund a customer?",
+    answer: "Yes. You can refund a whole payment from your payments list.",
+  },
+];
+
 export const COPY_LIVE: PublicCopy = {
   hero: {
     title: "Get paid in seconds",
-    body: "Send customers a pay link. They pay by PayShap, Capitec Pay, Instant EFT or card, and you see it straight away. No website and no card machine.",
+    body: "Send a pay link or a payment request on WhatsApp. Your customer pays by PayShap, Capitec Pay, Instant EFT or card, and the money lands in your bank account. No website, no card machine and no business registration.",
   },
   steps: [
     {
@@ -53,12 +85,12 @@ export const COPY_LIVE: PublicCopy = {
       body: "Sign up with your cellphone number and pick your link, like ollopay.co.za/yourname.",
     },
     {
-      title: "Send it to a customer",
-      body: "Share your pay link or a payment request on WhatsApp, Instagram or in person.",
+      title: "Share it or request a payment",
+      body: "Send your pay link, or a payment request for an exact amount, on WhatsApp, Instagram or in person.",
     },
     {
-      title: "Get paid",
-      body: "Your customer pays on your pay page. You see the payment in your dashboard.",
+      title: "Money lands in your bank account",
+      body: "Your customer pays on your pay page. You see the payment in your dashboard and the money goes to your bank account.",
     },
   ],
   methods: {
@@ -70,6 +102,7 @@ export const COPY_LIVE: PublicCopy = {
     body: "Money from PayShap, Capitec Pay and Instant EFT payments goes to your bank account straight away. Card payments are not paid out instantly.",
   },
   pricing: pricing("Start free. Pay only when you get paid."),
+  faq: faq(true),
   cta: {
     title: "Make your pay link",
     body: "It takes a few minutes. You will need your ID and your bank account details.",
@@ -79,7 +112,7 @@ export const COPY_LIVE: PublicCopy = {
 export const COPY_PRELAUNCH: PublicCopy = {
   hero: {
     title: `Launching ${LAUNCH_MONTH}`,
-    body: "Ollo is a way to get paid in seconds. Send customers a pay link and they pay by PayShap, Capitec Pay, Instant EFT or card. Leave your number and we will message you when it opens.",
+    body: "Ollo is how you will get paid in seconds, with no website, no card machine and no business registration. Send a pay link and customers pay by PayShap, Capitec Pay, Instant EFT or card. Leave your number and we will message you when it opens.",
   },
   steps: COPY_LIVE.steps.map((s) => ({ ...s })),
   methods: {
@@ -91,6 +124,7 @@ export const COPY_PRELAUNCH: PublicCopy = {
     body: "At launch, money from bank payments will go to your bank account straight away. Card payments will not be paid out instantly.",
   },
   pricing: pricing("These are the prices at launch."),
+  faq: faq(false),
   cta: {
     title: "Be first to know",
     body: `Leave your number and we will message you when Ollo opens in ${LAUNCH_MONTH}.`,

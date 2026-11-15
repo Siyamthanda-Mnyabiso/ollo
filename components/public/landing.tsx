@@ -98,6 +98,23 @@ export function Landing({ live }: { live: boolean }) {
 
         <PricingSection pricing={copy.pricing} />
 
+        <section
+          aria-labelledby="faq-title"
+          className="mx-auto w-full max-w-5xl px-4 py-12 md:px-8"
+        >
+          <h2 id="faq-title" className="text-primary text-3xl font-bold tracking-tight">
+            Questions
+          </h2>
+          <div className="mt-6 grid gap-4 md:grid-cols-2">
+            {copy.faq.map((item) => (
+              <div key={item.question} className="bg-card rounded-2xl p-6 shadow-sm">
+                <h3 className="text-lg font-bold">{item.question}</h3>
+                <p className="text-muted-foreground mt-2">{item.answer}</p>
+              </div>
+            ))}
+          </div>
+        </section>
+
         <section className="mx-auto w-full max-w-5xl px-4 pb-20 md:px-8">
           <div className="rounded-3xl bg-[var(--ollo-teal-900)] p-8 text-white">
             <h2 className="text-3xl font-bold">{copy.cta.title}</h2>

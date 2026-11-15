@@ -20,6 +20,14 @@ describe.each([
     for (const text of all) expect(text).not.toMatch(/\b(shop|shops|store|stores)\b/i);
   });
 
+  it("is payments-first: no order or store-builder wording", () => {
+    expect(all.join(" ")).not.toMatch(/manage orders|order from you|checkout|storefront/i);
+    expect(copy.hero.body).toMatch(/no website/i);
+    expect(copy.hero.body).toMatch(/no card machine/i);
+    expect(copy.hero.body).toMatch(/no business registration/i);
+    expect(copy.faq.length).toBeGreaterThanOrEqual(5);
+  });
+
   it("uses pay link and pay page", () => {
     const joined = all.join(" ").toLowerCase();
     expect(joined).toContain("pay link");
