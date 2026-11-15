@@ -1,14 +1,8 @@
-import { FEE_RATES_BPS, MINIMUM_FEE_CENTS } from "@/lib/fees/config";
-import { PLAN_OPTIONS } from "@/lib/sellers/options";
-
 /**
  * The words on the public pages, from the Figma landing page (Hi-fi, "Landing page"), in two
  * versions chosen by the PAYMENTS_LIVE flag. Only the sentences the owner approved differ from the
  * design. Rules: say "pay link" and "pay page", never "shop" or "store", and never say "instantly".
  */
-const pct = (bps: number) => `${bps / 100}%`;
-const rate = (plan: "free" | "pro", cls: "bank" | "card") => pct(FEE_RATES_BPS[plan][cls]);
-
 export const LAUNCH_MONTH = "January";
 
 export interface LandingCopy {
@@ -132,29 +126,3 @@ export const COPY_PRELAUNCH: LandingCopy = {
 };
 
 export const getCopy = (live: boolean): LandingCopy => (live ? COPY_LIVE : COPY_PRELAUNCH);
-
-// ---- the pricing page --------------------------------------------------------------------------
-
-export interface PricingCopy {
-  title: string;
-  intro: string;
-  plans: { name: string; price: string; lines: string[] }[];
-  minimumFee: string;
-}
-
-export const getPricingCopy = (live: boolean): PricingCopy => ({
-  title: "Pricing",
-  intro: live ? "Start free. Pay only when you get paid." : "These are the prices at launch.",
-  plans: PLAN_OPTIONS.map((p) => ({
-    name: p.name,
-    price: p.price,
-    lines: [
-      `${rate(p.value, "bank")} on each bank payment`,
-      `${rate(p.value, "card")} on each card payment`,
-      p.value === "free"
-        ? "Ollo branding on your pay page"
-        : "Your own domain and no Ollo branding",
-    ],
-  })),
-  minimumFee: `The smallest fee on any payment is R${MINIMUM_FEE_CENTS / 100}.`,
-});

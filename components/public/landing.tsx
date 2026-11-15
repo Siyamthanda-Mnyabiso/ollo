@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ChevronDown, Clock, Landmark, Search } from "lucide-react";
+import { Clock, Landmark } from "lucide-react";
 import type { ReactNode } from "react";
 import { DotMap } from "@/components/public/dot-map";
 import {
@@ -11,6 +11,15 @@ import {
   TikTokLogo,
   WhatsAppLogo,
 } from "@/components/public/platform-logos";
+import { PayoutsScreen, ShareScreen } from "@/components/public/phone-screens";
+import {
+  HeroFrame,
+  JoinBand,
+  MINT_GRADIENT,
+  PILL,
+  SiteFooter,
+  TEAL,
+} from "@/components/public/site";
 import { getCopy, type LandingCopy } from "@/lib/public/copy";
 
 /*
@@ -18,21 +27,6 @@ import { getCopy, type LandingCopy } from "@/lib/public/copy";
  * The phone mockups are images in the design: until the owner decides what goes in each slot they
  * are drawn as empty phone frames (see PhoneSlot).
  */
-const TEAL = "bg-[var(--ollo-teal-900)]";
-const MINT_GRADIENT = "bg-[linear-gradient(160deg,#00c781_0%,#d3f6e7_100%)]";
-const PILL =
-  "inline-flex h-14 items-center justify-center rounded-full px-8 text-base font-bold whitespace-nowrap";
-
-function Wordmark({ light = true, className = "" }: { light?: boolean; className?: string }) {
-  return (
-    <span
-      className={`text-3xl font-extrabold tracking-tight ${light ? "text-white" : "text-[var(--ollo-teal-900)]"} ${className}`}
-    >
-      ollo
-    </span>
-  );
-}
-
 /** An empty phone frame: the design's phone chrome with no screen in it yet. */
 function PhoneSlot({ className = "" }: { className?: string }) {
   return (
@@ -64,98 +58,54 @@ function PayoutCard({ copy, size }: { copy: LandingCopy; size: "hero" | "step" }
   );
 }
 
-function Header({ copy }: { copy: LandingCopy }) {
-  return (
-    <>
-      <div
-        className={`${TEAL} absolute top-0 left-0 z-10 flex h-16 items-center rounded-br-[32px] pr-8 pl-6 md:pr-12 md:pl-12`}
-      >
-        <Link href="/" aria-label="Ollo home">
-          <Wordmark />
-        </Link>
-      </div>
-      <nav
-        aria-label="Main"
-        className={`${TEAL} absolute top-0 left-1/2 z-10 hidden h-16 -translate-x-1/2 items-center gap-10 rounded-b-[32px] px-12 text-white md:flex`}
-      >
-        <a href="#how-it-works">{copy.nav.howItWorks}</a>
-        <Link href="/pricing">{copy.nav.pricing}</Link>
-        {/* The About and Help centre pages do not exist yet. */}
-        <span>{copy.nav.about}</span>
-        <span>{copy.nav.helpCentre}</span>
-      </nav>
-      <div
-        className={`${TEAL} absolute top-0 right-0 z-10 flex h-16 items-center gap-4 rounded-bl-[32px] pr-6 pl-8 text-white md:h-[72px] md:pr-12 md:pl-10`}
-      >
-        <Search className="hidden size-6 md:block" aria-hidden="true" />
-        <Link href="/sign-in" className="font-bold">
-          {copy.nav.logIn}
-        </Link>
-      </div>
-    </>
-  );
-}
-
-function Hero({ copy, live }: { copy: LandingCopy; live: boolean }) {
+function Hero({ copy }: { copy: LandingCopy }) {
   const { hero } = copy;
   return (
-    <section className="p-3 md:p-6">
-      <div
-        className={`relative min-h-[820px] overflow-hidden rounded-[32px] md:min-h-[900px] md:rounded-[40px] ${MINT_GRADIENT}`}
-      >
-        <Header copy={copy} />
-        <DotMap className="absolute top-[38%] left-[46%] hidden w-[44%] md:block" />
-        <div className="relative grid gap-12 px-6 pt-32 pb-56 md:grid-cols-[640px_1fr] md:gap-[112px] md:px-[88px] md:pt-[170px] md:pb-48">
-          <div className="flex flex-col gap-6">
-            {hero.label ? <p className="font-bold">{hero.label}</p> : null}
-            <h1 className="max-w-[640px] text-5xl leading-[1.07] font-bold tracking-tight md:text-[56px]">
-              {hero.title}
-            </h1>
-            <p className="max-w-[640px] text-xl">{hero.body}</p>
-            <div className="flex flex-wrap items-center gap-6">
-              <Link href="/sign-in" className={`${PILL} ${TEAL} text-white`}>
-                {hero.primaryButton}
-              </Link>
-              <a
-                href="#how-it-works"
-                className={`${PILL} h-14 border-2 border-[var(--ollo-teal-900)] px-6 text-[var(--ollo-teal-900)]`}
-              >
-                {hero.secondaryButton}
-              </a>
-            </div>
-            <p>{hero.note}</p>
+    <HeroFrame nav={copy.nav} variant="home" bottomLink="#how-it-works">
+      <DotMap className="absolute top-[38%] left-[46%] hidden w-[44%] md:block" />
+      <div className="relative grid gap-12 px-6 pt-28 pb-56 md:grid-cols-[640px_1fr] md:gap-[112px] md:px-[88px] md:pt-[170px] md:pb-0">
+        <div className="flex flex-col gap-6">
+          {hero.label ? <p className="font-bold">{hero.label}</p> : null}
+          <h1 className="max-w-[640px] text-5xl leading-[1.07] font-bold tracking-tight md:text-[56px]">
+            {hero.title}
+          </h1>
+          <p className="max-w-[640px] text-xl">{hero.body}</p>
+          <div className="flex flex-wrap items-center gap-6">
+            <Link href="/sign-in" className={`${PILL} ${TEAL} text-white`}>
+              {hero.primaryButton}
+            </Link>
+            <a
+              href="#how-it-works"
+              className={`${PILL} h-14 border-2 border-[var(--ollo-teal-900)] px-6 text-[var(--ollo-teal-900)]`}
+            >
+              {hero.secondaryButton}
+            </a>
           </div>
-          <div className="md:max-w-[400px] md:pt-16">
-            <PayoutCard copy={copy} size="hero" />
-          </div>
+          <p>{hero.note}</p>
         </div>
-        <div className="absolute inset-x-0 bottom-20 flex flex-col items-center gap-3 px-4">
-          <p className="font-bold">{hero.shareLabel}</p>
-          <div className="flex flex-wrap justify-center gap-3 font-bold text-[var(--ollo-teal-900)]">
-            {[
-              { label: "Instagram", icon: <InstagramIcon className="size-6" /> },
-              { label: "WhatsApp", icon: <ChatIcon className="size-6" /> },
-              { label: "TikTok", icon: <ShareIcon className="size-6" /> },
-            ].map((p) => (
-              <span
-                key={p.label}
-                className="flex h-12 items-center gap-2 rounded-xl border-2 border-[var(--ollo-teal-900)] px-5"
-              >
-                {p.icon}
-                {p.label}
-              </span>
-            ))}
-          </div>
+        <div className="md:max-w-[400px] md:pt-16">
+          <PayoutCard copy={copy} size="hero" />
         </div>
-        <a
-          href="#how-it-works"
-          className={`${TEAL} absolute bottom-0 left-1/2 flex h-14 w-[min(392px,86%)] -translate-x-1/2 items-center justify-center gap-2 rounded-t-[32px] text-white`}
-        >
-          {hero.scrollLabel}
-          <ChevronDown className="size-6" aria-hidden="true" />
-        </a>
       </div>
-    </section>
+      <div className="absolute inset-x-0 bottom-20 flex flex-col items-center gap-3 px-4">
+        <p className="font-bold">{hero.shareLabel}</p>
+        <div className="flex flex-wrap justify-center gap-3 font-bold text-[var(--ollo-teal-900)]">
+          {[
+            { label: "Instagram", icon: <InstagramIcon className="size-6" /> },
+            { label: "WhatsApp", icon: <ChatIcon className="size-6" /> },
+            { label: "TikTok", icon: <ShareIcon className="size-6" /> },
+          ].map((p) => (
+            <span
+              key={p.label}
+              className="flex h-12 items-center gap-2 rounded-xl border-2 border-[var(--ollo-teal-900)] px-5"
+            >
+              {p.icon}
+              {p.label}
+            </span>
+          ))}
+        </div>
+      </div>
+    </HeroFrame>
   );
 }
 
@@ -230,7 +180,7 @@ function How({ copy }: { copy: LandingCopy }) {
           <PhoneSlot className="mx-auto mt-8 h-56 w-[296px] max-w-full md:absolute md:top-8 md:right-14 md:mt-0 md:h-[400px]" />
         </BentoCard>
         <BentoCard className="min-h-[380px]" tone="dark" title={two!.title} body={two!.body}>
-          <PhoneSlot className="mx-auto mt-8 h-48 w-[296px] max-w-full md:absolute md:top-[151px] md:left-1/2 md:mt-0 md:h-[378px] md:-translate-x-1/2" />
+          <ShareScreen className="mx-auto mt-8 h-72 w-[296px] max-w-full md:absolute md:top-[151px] md:left-1/2 md:mt-0 md:h-[378px] md:-translate-x-1/2" />
         </BentoCard>
       </div>
       <div className="mt-6 grid gap-6 md:grid-cols-[424fr_672fr]">
@@ -307,64 +257,10 @@ function Features({ copy }: { copy: LandingCopy }) {
           title={four!.title}
           body={four!.body}
         >
-          <PhoneSlot className="mx-auto mt-8 h-64 w-[296px] max-w-full md:absolute md:top-[179px] md:left-1/2 md:mt-0 md:h-[400px] md:-translate-x-1/2" />
+          <PayoutsScreen className="mx-auto mt-8 h-[420px] w-[296px] max-w-full md:absolute md:top-[179px] md:left-1/2 md:mt-0 md:h-[400px] md:-translate-x-1/2" />
         </BentoCard>
       </div>
     </section>
-  );
-}
-
-function Join({ copy }: { copy: LandingCopy }) {
-  return (
-    <section id="join" className={`${TEAL} scroll-mt-0 px-3 pb-6 md:px-6`}>
-      <div
-        className={`flex flex-col gap-6 rounded-[32px] p-8 md:rounded-[40px] md:p-20 ${MINT_GRADIENT}`}
-      >
-        <h2 className="text-4xl leading-tight font-bold md:text-[56px]">{copy.join.title}</h2>
-        <p className="text-xl">{copy.join.body}</p>
-        <Link href="/sign-in" className={`${PILL} ${TEAL} self-start text-white`}>
-          {copy.join.button}
-        </Link>
-      </div>
-    </section>
-  );
-}
-
-function Footer({ copy }: { copy: LandingCopy }) {
-  const f = copy.footer;
-  const column = (title: string, items: string[], links: Record<string, string> = {}) => (
-    <div className="flex flex-col gap-3">
-      <p className="font-bold text-white">{title}</p>
-      {items.map((item) =>
-        links[item] ? (
-          <Link key={item} href={links[item]} className="text-[#d3f6e7]">
-            {item}
-          </Link>
-        ) : (
-          <span key={item} className="text-[#d3f6e7]">
-            {item}
-          </span>
-        ),
-      )}
-    </div>
-  );
-  return (
-    <footer className={`${TEAL} px-6 py-16 md:px-16`}>
-      <div className="mx-auto flex max-w-[1120px] flex-col gap-8">
-        <div className="flex flex-col justify-between gap-10 md:flex-row">
-          <div className="flex max-w-[360px] flex-col gap-4">
-            <Wordmark className="text-[40px]" />
-            <p className="text-[#d3f6e7]">{f.tagline}</p>
-          </div>
-          <div className="flex flex-wrap gap-16">
-            {column("Product", f.product, { "How it works": "#how-it-works", Pricing: "/pricing" })}
-            {column("Company", f.company)}
-            {column("Legal", f.legal)}
-          </div>
-        </div>
-        <p className="text-[#d3f6e7]">{f.legalLine}</p>
-      </div>
-    </footer>
   );
 }
 
@@ -374,15 +270,15 @@ export function Landing({ live }: { live: boolean }) {
   return (
     <div className={`${TEAL} text-[var(--ollo-ink-900)]`}>
       <main>
-        <Hero copy={copy} live={live} />
+        <Hero copy={copy} />
         <Strip copy={copy} />
         <div className="bg-[var(--ollo-surface)]">
           <How copy={copy} />
           <Features copy={copy} />
         </div>
-        <Join copy={copy} />
+        <JoinBand join={copy.join} />
       </main>
-      <Footer copy={copy} />
+      <SiteFooter footer={copy.footer} />
     </div>
   );
 }

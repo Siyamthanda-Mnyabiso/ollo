@@ -1,5 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { COPY_LIVE, COPY_PRELAUNCH, getCopy, getPricingCopy } from "./copy";
+import { LEGAL_NOTICE, LEGAL_PLACEHOLDER, PRICING, PRIVACY, TERMS } from "./pages";
+import { COPY_LIVE, COPY_PRELAUNCH, getCopy } from "./copy";
 
 const strings = (value: unknown): string[] =>
   typeof value === "string"
@@ -78,11 +79,22 @@ describe("the flag", () => {
   });
 });
 
-describe("pricing copy", () => {
-  it("shows the real fees from the fee config", () => {
-    const text = JSON.stringify(getPricingCopy(true));
-    expect(text).toMatch(/3% on each bank payment/);
-    expect(text).toMatch(/3.9% on each card payment/);
-    expect(text).toMatch(/2.5% on each bank payment/);
+describe("pricing page", () => {
+  it("shows the agreed fees and leaves out the unconfirmed lines", () => {
+    const text = JSON.stringify(PRICING);
+    expect(text).toMatch(/3% per bank sale/);
+    expect(text).toMatch(/3.9% per card sale/);
+    expect(text).toMatch(/R149 a month/);
+    expect(text).toMatch(/2.5% per bank sale/);
+    expect(text).not.toMatch(/product listing|order request|instantly|insights|discount|staff/i);
+  });
+});
+
+describe("legal pages", () => {
+  it("are marked as placeholders for a lawyer", () => {
+    expect(LEGAL_NOTICE.body).toMatch(/legal adviser/);
+    expect(LEGAL_PLACEHOLDER).toMatch(/lawyer/);
+    expect(TERMS.sections).toHaveLength(9);
+    expect(PRIVACY.sections).toHaveLength(7);
   });
 });
