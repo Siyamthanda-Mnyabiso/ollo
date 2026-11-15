@@ -365,6 +365,9 @@ test.describe("items on the pay page", () => {
 test.describe("payments list, detail and refund", () => {
   test("lists a payment, shows its detail, and refunds it once", async ({ page, browser }) => {
     await onboardSeller(page, phone);
+    // Pause payouts so the money is still in the seller's balance. Once a bank payment has been
+    // paid out instantly, a refund is refused (see the next test).
+    await sql!`update sellers set payouts_paused_until = now() + interval '1 day' where user_id = (select id from auth.users where phone = ${e164()})`;
     await sellerPays(page, browser, "200");
 
     await page.getByRole("link", { name: "Payments" }).click();
