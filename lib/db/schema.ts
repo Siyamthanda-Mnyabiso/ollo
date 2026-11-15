@@ -144,6 +144,8 @@ export const sellerVerification = rlsTable(
     /** AES-256-GCM ciphertext from lib/crypto. Never store the plain number. */
     idNumber: text("id_number"),
     idStatus: checkStatusEnum("id_status").notNull().default("not_started"),
+    /** The verification provider's reference for the running or last ID check. */
+    idCheckReference: text("id_check_reference"),
     bankName: text("bank_name"),
     /** AES-256-GCM ciphertext from lib/crypto. */
     accountNumber: text("account_number"),

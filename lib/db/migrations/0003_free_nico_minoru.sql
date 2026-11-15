@@ -1,0 +1,1 @@
+ALTER TABLE "seller_verification" ADD COLUMN "id_check_reference" text;

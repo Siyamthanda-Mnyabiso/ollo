@@ -1,6 +1,7 @@
 import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/server";
+import { canOpenStep } from "@/lib/sellers/onboarding-steps";
 import { getOnboardingState } from "@/lib/sellers/queries";
 import { PlanForm } from "@/components/onboarding/plan-form";
 import { StepShell } from "@/components/onboarding/ui";
@@ -12,7 +13,7 @@ async function PlanStepContent() {
   if (!user) redirect("/sign-in");
   const state = await getOnboardingState(user.id);
   if (!state.seller) redirect("/onboarding/profile");
-  if (state.verification?.bankStatus !== "verified") redirect("/onboarding/bank");
+  if (!canOpenStep("/onboarding/plan", state)) redirect("/onboarding");
   return (
     <StepShell
       step={6}

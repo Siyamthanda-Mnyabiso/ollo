@@ -77,3 +77,17 @@ describe("bankSchema and planSchema", () => {
     expect(planSchema.safeParse({ plan: "enterprise" }).success).toBe(false);
   });
 });
+
+import { BANK_FAILURE_MESSAGES } from "./messages";
+
+describe("bank failure messages", () => {
+  it("has a distinct plain message for each failed-check reason", () => {
+    const messages = Object.values(BANK_FAILURE_MESSAGES);
+    expect(Object.keys(BANK_FAILURE_MESSAGES).sort()).toEqual([
+      "account_not_found",
+      "name_mismatch",
+      "unavailable",
+    ]);
+    expect(new Set(messages).size).toBe(3);
+  });
+});

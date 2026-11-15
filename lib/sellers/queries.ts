@@ -28,7 +28,7 @@ export async function takenHandlesWithPrefix(prefix: string): Promise<Set<string
 
 export async function getOnboardingState(userId: string) {
   const seller = await getSellerByUserId(userId);
-  if (!seller) return { seller: null, hasSurvey: false, handleConfirmed: false };
+  if (!seller) return { seller: null, hasSurvey: false, verification: null };
   const [survey] = await db
     .select({ id: sellerSurvey.sellerId })
     .from(sellerSurvey)

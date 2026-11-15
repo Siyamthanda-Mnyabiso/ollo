@@ -15,6 +15,10 @@ import {
   profileSchema,
 } from "@/lib/sellers/schemas";
 import { encryptField } from "@/lib/crypto";
+import { BANK_FAILURE_MESSAGES } from "@/lib/sellers/messages";
+import { canOpenStep } from "@/lib/sellers/onboarding-steps";
+import { getOnboardingState } from "@/lib/sellers/queries";
+import { getVerificationProvider, IDENTITY_FAILURE_MESSAGES } from "@/lib/verification";
 import { getPaymentProvider } from "@/lib/payments";
 import { slugify, uniqueHandle } from "@/lib/sellers/slug";
 import {
@@ -141,17 +145,14 @@ export async function saveLink(_prev: ActionState, formData: FormData): Promise<
   redirect("/onboarding/verify");
 }
 
-const BANK_FAILURE_MESSAGES = {
-  name_mismatch: "The account holder name does not match this account. Check it and try again.",
-  account_not_found: "We could not find that account. Check the bank and account number.",
-  unavailable: "The bank check is not available right now. Please try again in a few minutes.",
-} as const;
-
 /** Checks the account belongs to the seller (through the payment provider), then saves it encrypted. */
 export async function saveBank(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireUser();
-  const seller = await getSellerByUserId(user.id);
+  const progress = await getOnboardingState(user.id);
+  const seller = progress.seller;
   if (!seller) redirect("/onboarding/profile");
+  // The bank step only opens once the ID check has passed.
+  if (!canOpenStep("/onboarding/bank", progress)) redirect("/onboarding/verify");
 
   const parsed = bankSchema.safeParse({
     bankName: formData.get("bankName"),
@@ -204,8 +205,10 @@ export async function saveBank(_prev: ActionState, formData: FormData): Promise<
  */
 export async function savePlan(_prev: ActionState, formData: FormData): Promise<ActionState> {
   const user = await requireUser();
-  const seller = await getSellerByUserId(user.id);
+  const progress = await getOnboardingState(user.id);
+  const seller = progress.seller;
   if (!seller) redirect("/onboarding/profile");
+  if (!canOpenStep("/onboarding/plan", progress)) redirect("/onboarding");
 
   const parsed = planSchema.safeParse({ plan: formData.get("plan") });
   if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
@@ -221,4 +224,114 @@ export async function savePlan(_prev: ActionState, formData: FormData): Promise<
     });
   });
   redirect("/onboarding/done");
+}
+
+const MAX_SELFIE_BYTES = 5 * 1024 * 1024;
+
+const identitySchema = z.object({
+  idNumber: z
+    .string()
+    .trim()
+    .transform((v) => v.replace(/[\s-]/g, ""))
+    .pipe(z.string().regex(/^\d{13}$/, "Enter your 13 digit ID number")),
+});
+
+/** Starts the ID and selfie check. The ID number is saved encrypted; the selfie is never stored. */
+export async function submitIdentity(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  const seller = await getSellerByUserId(user.id);
+  if (!seller) redirect("/onboarding/profile");
+
+  const parsed = identitySchema.safeParse({ idNumber: formData.get("idNumber") });
+  if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
+
+  const selfie = formData.get("selfie");
+  if (!(selfie instanceof File) || selfie.size === 0 || !selfie.type.startsWith("image/"))
+    return { fieldErrors: { selfie: ["Take or choose a selfie photo"] } };
+  if (selfie.size > MAX_SELFIE_BYTES)
+    return { fieldErrors: { selfie: ["That photo is too large. Use one under 5 MB."] } };
+
+  let result;
+  try {
+    result = await getVerificationProvider().startIdentityCheck({
+      idNumber: parsed.data.idNumber,
+      fullName: seller.fullName,
+      selfie: { bytes: new Uint8Array(await selfie.arrayBuffer()), contentType: selfie.type },
+    });
+  } catch {
+    return { error: IDENTITY_FAILURE_MESSAGES.unavailable };
+  }
+
+  const values = {
+    idNumber: encryptField(parsed.data.idNumber),
+    idStatus: result.status === "failed" ? ("failed" as const) : ("checking" as const),
+    idCheckReference: result.reference,
+  };
+  await db.transaction(async (tx) => {
+    await tx
+      .insert(sellerVerification)
+      .values({ sellerId: seller.id, ...values })
+      .onConflictDoUpdate({ target: sellerVerification.sellerId, set: values });
+    await tx.insert(auditLog).values({
+      actor: user.id,
+      action: "seller.id_check_started",
+      entity: "seller_verification",
+      entityId: seller.id,
+      after: { status: values.idStatus },
+    });
+  });
+  redirect("/onboarding/verify");
+}
+
+export interface IdentityStatus {
+  status: "not_started" | "checking" | "verified" | "failed";
+  message?: string;
+}
+
+/** Asks the provider how the running check is going and saves the answer. Polled by the verify page. */
+export async function pollIdentity(): Promise<IdentityStatus> {
+  const user = await requireUser();
+  const { seller, verification } = await getOnboardingState(user.id);
+  if (!seller || !verification) return { status: "not_started" };
+  if (verification.idStatus !== "checking" || !verification.idCheckReference)
+    return { status: verification.idStatus };
+
+  let result;
+  try {
+    result = await getVerificationProvider().getIdentityCheck(verification.idCheckReference);
+  } catch {
+    return { status: "checking" };
+  }
+  if (result.status === "checking") return { status: "checking" };
+
+  const idStatus = result.status === "verified" ? "verified" : "failed";
+  await db.transaction(async (tx) => {
+    await tx
+      .update(sellerVerification)
+      .set({ idStatus })
+      .where(eq(sellerVerification.sellerId, seller.id));
+    await tx.insert(auditLog).values({
+      actor: user.id,
+      action: `seller.id_${idStatus}`,
+      entity: "seller_verification",
+      entityId: seller.id,
+      after: result.status === "failed" ? { reason: result.reason } : {},
+    });
+  });
+  return result.status === "failed"
+    ? { status: "failed", message: IDENTITY_FAILURE_MESSAGES[result.reason] }
+    : { status: "verified" };
+}
+
+/** Lets a seller whose check failed enter their details again. */
+export async function retryIdentity(): Promise<void> {
+  const user = await requireUser();
+  const { seller, verification } = await getOnboardingState(user.id);
+  if (seller && verification?.idStatus === "failed") {
+    await db
+      .update(sellerVerification)
+      .set({ idStatus: "not_started", idCheckReference: null })
+      .where(eq(sellerVerification.sellerId, seller.id));
+  }
+  redirect("/onboarding/verify");
 }

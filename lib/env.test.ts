@@ -4,7 +4,7 @@ import { getEnv } from "./env";
 const valid = {
   NEXT_PUBLIC_APP_URL: "http://localhost:3000",
   NEXT_PUBLIC_SUPABASE_URL: "http://127.0.0.1:54321",
-  NEXT_PUBLIC_SUPABASE_ANON_KEY: "anon",
+  NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY: "anon",
   SUPABASE_SERVICE_ROLE_KEY: "service",
   DATABASE_URL: "postgresql://postgres:postgres@127.0.0.1:54322/postgres",
   FIELD_ENCRYPTION_KEY: Buffer.alloc(32, 1).toString("base64"),
