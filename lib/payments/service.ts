@@ -18,7 +18,7 @@ import {
   startOfDaySouthAfrica,
   type LimitCheck,
 } from "@/lib/limits";
-import { maybeInstantPayout } from "@/lib/payouts/service";
+import { payoutOnConfirmation } from "@/lib/payouts/service";
 import { getPaymentProvider } from "./index";
 import { ProviderTimeoutError, type ProviderPaymentStatus } from "./types";
 
@@ -174,7 +174,7 @@ export async function settlePayment(
   const outcome = await settleInTransaction(providerReference, status);
   if (outcome.result === "settled" && status === "succeeded" && outcome.paymentId) {
     // After the commit, so a payout problem can never undo a settled payment.
-    await maybeInstantPayout(outcome.paymentId);
+    await payoutOnConfirmation(outcome.paymentId);
   }
   return outcome.result;
 }

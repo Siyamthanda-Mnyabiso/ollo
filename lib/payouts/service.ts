@@ -5,20 +5,36 @@ import { db } from "@/lib/db";
 import { auditLog, payments, payouts, sellers, sellerVerification } from "@/lib/db/schema";
 import { ensureAccount, payoutLines, postTransaction } from "@/lib/ledger";
 import { getPaymentProvider } from "@/lib/payments";
-import { isInstantPayoutMethod, isPaused } from "./config";
+import { getEnv } from "@/lib/env";
+import { isPaused, shouldPayOut, type PayoutTrigger } from "./config";
+
+/** Pays the seller when a payment is confirmed, if that method is set to "on_confirmation". */
+export const payoutOnConfirmation = (paymentId: string) => payOut(paymentId, "confirmation");
 
 /**
- * Sends the seller their money for one paid bank payment, straight away. Does nothing for card
- * payments, for a seller whose payouts are paused, or one without a verified bank account.
+ * Pays the seller once the provider reports the funds as settled, if that method is set to
+ * "on_settlement". Call this from the provider's settlement event or a reconciliation job.
+ */
+export const payoutOnSettlement = (paymentId: string) => payOut(paymentId, "settlement");
+
+/**
+ * Sends the seller their money for one succeeded payment, but only at the moment its method is
+ * configured for (see PAYOUT_TIMING). Does nothing for a seller whose payouts are paused or one
+ * without a verified bank account.
  * Never throws: a payout problem must not undo a payment. An unsent payout is simply not made
  * yet, and the money stays in the seller's balance.
  */
-export async function maybeInstantPayout(
+async function payOut(
   paymentId: string,
+  trigger: PayoutTrigger,
 ): Promise<"sent" | "skipped" | "failed"> {
   try {
     const [payment] = await db.select().from(payments).where(eq(payments.id, paymentId)).limit(1);
-    if (!payment || payment.status !== "succeeded" || !isInstantPayoutMethod(payment.method))
+    if (
+      !payment ||
+      payment.status !== "succeeded" ||
+      !shouldPayOut(getEnv().PAYMENT_PROVIDER, payment.method, trigger)
+    )
       return "skipped";
 
     const [seller] = await db

@@ -86,6 +86,41 @@ describe("payoutLines", () => {
   });
 });
 
+describe("payment then payout", () => {
+  const balanceOf = (lines: { accountId: string; amountCents: number }[], id: string) =>
+    lines.filter((l) => l.accountId === id).reduce((n, l) => n + l.amountCents, 0);
+  const settle = paymentSettlementLines({
+    paymentId: "p",
+    amountCents: 25_000,
+    feeCents: 750,
+    accounts,
+  });
+  const payout = payoutLines({
+    payoutId: "o",
+    paymentId: "p",
+    amountCents: 25_000 - 750,
+    accounts,
+  });
+
+  it("before any payout the seller is owed the net amount, which Stitch holds", () => {
+    expect(balanceOf(settle, "seller")).toBe(-24_250);
+    expect(balanceOf(settle, "clearing")).toBe(25_000);
+  });
+
+  it("after the payout the seller is owed nothing and only Ollo's fee stays with Stitch", () => {
+    const all = [...settle, ...payout];
+    expect(balanceOf(all, "seller")).toBe(0);
+    expect(balanceOf(all, "clearing")).toBe(750);
+    expect(balanceOf(all, "fees")).toBe(-750);
+    expect(() => assertBalanced(all)).not.toThrow();
+  });
+
+  it("a payment waiting for settlement writes the same lines and no payout lines", () => {
+    // "On settlement" only delays the payout. The payment itself is recorded the same way.
+    expect(settle.every((l) => l.payoutId === undefined)).toBe(true);
+  });
+});
+
 describe("refundLines", () => {
   const accounts = { stitchClearing: "clearing", sellerBalance: "seller", feeIncome: "fee" };
   it("exactly reverses a settlement and balances", () => {

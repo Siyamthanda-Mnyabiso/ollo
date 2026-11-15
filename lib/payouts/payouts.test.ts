@@ -1,12 +1,41 @@
 import { describe, expect, it } from "vitest";
-import { BANK_CHANGE_PAUSE_HOURS, isInstantPayoutMethod, isPaused, pauseUntilFrom } from "./config";
+import { PAYMENT_METHODS } from "@/lib/fees";
+import {
+  BANK_CHANGE_PAUSE_HOURS,
+  isPaused,
+  pauseUntilFrom,
+  payoutTimingFor,
+  shouldPayOut,
+} from "./config";
 
-describe("instant payouts", () => {
-  it("covers bank payments and never cards", () => {
-    expect(isInstantPayoutMethod("payshap")).toBe(true);
-    expect(isInstantPayoutMethod("capitec_pay")).toBe(true);
-    expect(isInstantPayoutMethod("instant_eft")).toBe(true);
-    expect(isInstantPayoutMethod("card")).toBe(false);
+describe("payout timing", () => {
+  it("on the mock, bank methods pay out on confirmation and cards on settlement", () => {
+    for (const m of ["payshap", "capitec_pay", "instant_eft"] as const) {
+      expect(payoutTimingFor("mock", m)).toBe("on_confirmation");
+      expect(shouldPayOut("mock", m, "confirmation")).toBe(true);
+      expect(shouldPayOut("mock", m, "settlement")).toBe(false);
+    }
+    expect(shouldPayOut("mock", "card", "confirmation")).toBe(false);
+    expect(shouldPayOut("mock", "card", "settlement")).toBe(true);
+  });
+
+  it("on a real provider every method waits for settlement by default", () => {
+    for (const m of PAYMENT_METHODS) {
+      expect(payoutTimingFor("stitch", m)).toBe("on_settlement");
+      expect(shouldPayOut("stitch", m, "confirmation")).toBe(false);
+      expect(shouldPayOut("stitch", m, "settlement")).toBe(true);
+    }
+  });
+
+  it("a method is paid out at exactly one of the two moments, never both or neither", () => {
+    for (const provider of ["mock", "stitch"] as const) {
+      for (const m of PAYMENT_METHODS) {
+        expect(
+          Number(shouldPayOut(provider, m, "confirmation")) +
+            Number(shouldPayOut(provider, m, "settlement")),
+        ).toBe(1);
+      }
+    }
   });
 });
 
