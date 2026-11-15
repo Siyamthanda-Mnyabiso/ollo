@@ -30,6 +30,8 @@ test("with PAYMENTS_LIVE off, the home page says Launching January and has sign-
     "/sign-in",
   );
   await expect(page.getByLabel("Cellphone number")).toHaveCount(0);
+  // The hero has no share row; the strip below it already names the platforms.
+  await expect(page.getByText("Share your pay link on")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "How Ollo works" })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Everything you need to get paid" }),

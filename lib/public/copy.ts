@@ -16,7 +16,6 @@ export interface LandingCopy {
     secondaryButton: string;
     note: string;
     payoutCard: { amount: string; status: string; bank: string };
-    shareLabel: string;
     scrollLabel: string;
   };
   strip: { title: string; inPerson: string };
@@ -97,7 +96,6 @@ const hero = {
   secondaryButton: "See how it works",
   note: "Built for sellers on Instagram, WhatsApp and TikTok.",
   payoutCard: { amount: "R4,200.00", status: PAID_STATUS, bank: "Bank account ending 7890" },
-  shareLabel: "Share your pay link on",
   scrollLabel: "See how it works",
 };
 

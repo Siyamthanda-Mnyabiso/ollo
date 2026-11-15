@@ -3,11 +3,8 @@ import { Clock, Landmark } from "lucide-react";
 import type { ReactNode } from "react";
 import { DotMap } from "@/components/public/dot-map";
 import {
-  ChatIcon,
   FacebookLogo,
-  InstagramIcon,
   InstagramLogo,
-  ShareIcon,
   TikTokLogo,
   WhatsAppLogo,
 } from "@/components/public/platform-logos";
@@ -93,24 +90,6 @@ function Hero({ copy }: { copy: LandingCopy }) {
         <ParallaxLayer scroll={-0.05} className="md:max-w-[400px] md:pt-16">
           <PayoutCard copy={copy} size="hero" />
         </ParallaxLayer>
-      </div>
-      <div className="absolute inset-x-0 bottom-20 flex flex-col items-center gap-3 px-4">
-        <p className="font-bold">{hero.shareLabel}</p>
-        <div className="flex flex-wrap justify-center gap-3 font-bold text-[var(--ollo-teal-900)]">
-          {[
-            { label: "Instagram", icon: <InstagramIcon className="size-6" /> },
-            { label: "WhatsApp", icon: <ChatIcon className="size-6" /> },
-            { label: "TikTok", icon: <ShareIcon className="size-6" /> },
-          ].map((p) => (
-            <span
-              key={p.label}
-              className="flex h-12 items-center gap-2 rounded-xl border-2 border-[var(--ollo-teal-900)] px-5"
-            >
-              {p.icon}
-              {p.label}
-            </span>
-          ))}
-        </div>
       </div>
     </HeroFrame>
   );
