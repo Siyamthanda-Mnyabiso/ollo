@@ -1,8 +1,18 @@
+import { connection } from "next/server";
+import { Suspense } from "react";
+import { Landing } from "@/components/public/landing";
+import { getEnv } from "@/lib/env";
+
+async function LandingContent() {
+  // Read the flag on every request, not once at build time.
+  await connection();
+  return <Landing live={getEnv().PAYMENTS_LIVE} />;
+}
+
 export default function Page() {
   return (
-    <main className="mx-auto w-full max-w-3xl p-8">
-      <h1 className="text-primary text-3xl font-bold">Ollo</h1>
-      <p className="text-muted-foreground mt-2">Public marketing pages live in this route group.</p>
-    </main>
+    <Suspense fallback={null}>
+      <LandingContent />
+    </Suspense>
   );
 }
