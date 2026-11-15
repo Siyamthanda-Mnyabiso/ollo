@@ -4,7 +4,8 @@ import { notFound } from "next/navigation";
 import { z } from "zod";
 import { PayShell } from "@/components/pay/page-shell";
 import { formatRand } from "@/lib/money";
-import { refreshPayment } from "@/lib/payments/service";
+import { getSellerByHandle, refreshPayment } from "@/lib/payments/service";
+import { ctaLinkClass } from "@/components/dashboard/shell";
 
 export const metadata = { title: "Payment status" };
 
@@ -22,20 +23,22 @@ async function DoneContent({
   const payment = await refreshPayment(id.data);
   if (!payment) notFound();
   const amount = formatRand(payment.amountCents);
+  const seller = await getSellerByHandle(handle);
+  const to = seller ? ` to ${seller.displayName}` : "";
 
   if (payment.status === "succeeded") {
     return (
       <PayShell
+        status="ok"
         title="Payment received"
-        subtitle={`Your payment of ${amount} went through. Thank you.`}
-      >
-        <p className="text-muted-foreground">You can close this page.</p>
-      </PayShell>
+        subtitle={`Your payment of ${amount}${to} went through. Thank you. You can close this page.`}
+      ></PayShell>
     );
   }
   if (payment.status === "pending") {
     return (
       <PayShell
+        status="wait"
         title="Waiting for your bank"
         subtitle={`Your payment of ${amount} has not been confirmed yet.`}
       >
@@ -48,11 +51,12 @@ async function DoneContent({
   }
   return (
     <PayShell
+      status="bad"
       title={payment.status === "expired" ? "Payment expired" : "Payment did not go through"}
-      subtitle="You were not charged."
+      subtitle="You were not charged. Go back and try again."
     >
-      <Link href={`/${handle}`} className="text-primary font-bold">
-        Go back and try again
+      <Link href={`/${handle}`} className={`${ctaLinkClass} w-full`}>
+        Try again
       </Link>
     </PayShell>
   );

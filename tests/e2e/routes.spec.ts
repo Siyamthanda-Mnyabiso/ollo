@@ -19,7 +19,14 @@ test("with PAYMENTS_LIVE off, the landing page says Launching January and has no
   page,
 }) => {
   await page.goto("/");
-  await expect(page.getByRole("heading", { name: "Launching January" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "Launching January", level: 1 })).toBeVisible();
+  await expect(page.getByLabel("Cellphone number")).toBeVisible();
+  await expect(page.getByText("no business registration")).toBeVisible();
+  await expect(
+    page.getByRole("heading", { name: "How it works" }).or(page.getByText("Step 1")),
+  ).toBeVisible();
+  await expect(page.getByRole("heading", { name: "How fast will I get paid?" })).toBeVisible();
+  await expect(page.getByText("Public marketing pages live in this route group.")).toHaveCount(0);
   await expect(page.getByText(/\bshop\b|\bstore\b/i)).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Sign in" })).toHaveCount(0);
 });

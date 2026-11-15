@@ -260,6 +260,8 @@ export async function getSellerByHandle(handle: string) {
     .select({
       id: sellers.id,
       displayName: sellers.displayName,
+      bio: sellers.bio,
+      logoUrl: sellers.logoUrl,
       handle: sellers.handle,
       plan: sellers.plan,
       limitPerPaymentCents: sellers.limitPerPaymentCents,

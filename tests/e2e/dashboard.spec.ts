@@ -131,10 +131,10 @@ test.describe("dashboard", () => {
     await customer.goto(`/${seller!.handle}`);
     await customer.getByLabel("Instant EFT").check();
     await customer.getByLabel("Amount in rand").fill("1");
-    await customer.getByRole("button", { name: "Pay" }).click();
+    await customer.getByRole("button", { name: /^Pay/ }).click();
     await expect(customer.getByText("The smallest payment is R5")).toBeVisible();
     await customer.getByLabel("Amount in rand").fill("80.50");
-    await customer.getByRole("button", { name: "Pay" }).click();
+    await customer.getByRole("button", { name: /^Pay/ }).click();
     await expect(customer.getByRole("heading", { name: "Payment received" })).toBeVisible({
       timeout: 20_000,
     });
@@ -194,7 +194,7 @@ test.describe("payment limits", () => {
     await customer.goto(`/${handle}`);
     await customer.getByLabel("Instant EFT").check();
     await customer.getByLabel("Amount in rand").fill(amount);
-    await customer.getByRole("button", { name: "Pay" }).click();
+    await customer.getByRole("button", { name: /^Pay/ }).click();
     return customer;
   }
   const handleOf = async () => {
@@ -290,6 +290,27 @@ async function sellerPays(
   await customer.context().close();
 }
 
+test.describe("the pay page layout", () => {
+  test("shows the seller, the amount first, and the trust lines", async ({ page, browser }) => {
+    await onboardSeller(page, phone);
+    const [seller] =
+      await sql!`select s.handle, s.status from sellers s join auth.users u on u.id = s.user_id where u.phone = ${e164()}`;
+    expect(seller!.status).toBe("verified");
+    const customer = await (await browser.newContext()).newPage();
+    await customer.goto(`/${seller!.handle}`);
+    await expect(customer.getByRole("heading", { name: "Thandi Treats" })).toBeVisible();
+    await expect(customer.getByText("Verified seller")).toBeVisible();
+    await expect(customer.getByLabel("Amount in rand")).toBeVisible();
+    await expect(customer.getByText("Secure payment powered by Stitch")).toBeVisible();
+    await expect(
+      customer.getByText("Check the address says ollopay.co.za before you pay."),
+    ).toBeVisible();
+    await expect(customer.getByRole("link", { name: "Report this seller" })).toBeVisible();
+    await expect(customer.getByText(/\b(shop|store)\b/i)).toHaveCount(0);
+    await customer.context().close();
+  });
+});
+
 test.describe("items on the pay page", () => {
   test("a buyer can pick an item, and its price comes from the database", async ({
     page,
@@ -306,10 +327,11 @@ test.describe("items on the pay page", () => {
       await sql!`select s.handle from sellers s join auth.users u on u.id = s.user_id where u.phone = ${e164()}`;
     const customer = await (await browser.newContext()).newPage();
     await customer.goto(`/${seller!.handle}`);
-    await expect(customer.getByLabel(/Box braids/)).toBeChecked();
-    await expect(customer.getByLabel("Amount in rand")).toHaveCount(0);
+    // Picking an item fills the amount with its price.
+    await customer.getByLabel(/Box braids/).check();
+    await expect(customer.getByLabel("Amount in rand")).toHaveValue("850,00");
     await customer.getByLabel("Capitec Pay").check();
-    await customer.getByRole("button", { name: "Pay" }).click();
+    await customer.getByRole("button", { name: /^Pay/ }).click();
     await expect(customer.getByRole("heading", { name: "Payment received" })).toBeVisible({
       timeout: 20_000,
     });
@@ -321,10 +343,9 @@ test.describe("items on the pay page", () => {
     // "Another amount" still works.
     const other = await (await browser.newContext()).newPage();
     await other.goto(`/${seller!.handle}`);
-    await other.getByLabel("Another amount").check();
     await other.getByLabel("Amount in rand").fill("40");
     await other.getByLabel("Card").check();
-    await other.getByRole("button", { name: "Pay" }).click();
+    await other.getByRole("button", { name: /^Pay/ }).click();
     await expect(other.getByRole("heading", { name: "Payment received" })).toBeVisible({
       timeout: 20_000,
     });
@@ -403,13 +424,9 @@ test.describe("payouts, payment methods, settings and sharing", () => {
   ) {
     const customer = await (await browser.newContext()).newPage();
     await customer.goto(`/${handle}`);
-    await customer
-      .getByLabel("Another amount")
-      .check()
-      .catch(() => {});
     await customer.getByLabel(method).check();
     await customer.getByLabel("Amount in rand").fill(amount);
-    await customer.getByRole("button", { name: "Pay" }).click();
+    await customer.getByRole("button", { name: /^Pay/ }).click();
     await expect(customer.getByRole("heading", { name: "Payment received" })).toBeVisible({
       timeout: 20_000,
     });
@@ -515,7 +532,7 @@ test.describe("payouts, payment methods, settings and sharing", () => {
     await expect(page.getByText("Saved")).toBeVisible();
     const customer = await (await page.context().browser()!.newContext()).newPage();
     await customer.goto(link);
-    await expect(customer.getByRole("heading", { name: "Pay Thandi Braids" })).toBeVisible();
+    await expect(customer.getByRole("heading", { name: "Thandi Braids" })).toBeVisible();
     await customer.context().close();
   });
 });

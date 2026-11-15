@@ -185,7 +185,11 @@ export async function savePlan(_prev: ActionState, formData: FormData): Promise<
   if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
 
   await db.transaction(async (tx) => {
-    await tx.update(sellers).set({ onboardedAt: new Date() }).where(eq(sellers.id, seller.id));
+    // The ID check and the bank check have both passed by this step, so the seller is verified.
+    await tx
+      .update(sellers)
+      .set({ onboardedAt: new Date(), status: "verified" })
+      .where(eq(sellers.id, seller.id));
     await tx.insert(auditLog).values({
       actor: user.id,
       action: parsed.data.plan === "pro" ? "seller.pro_requested" : "seller.onboarded",

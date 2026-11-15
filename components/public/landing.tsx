@@ -127,6 +127,10 @@ export function Landing({ live }: { live: boolean }) {
           </div>
         </section>
       </main>
+      <footer className="mx-auto flex w-full max-w-5xl items-center gap-4 px-4 py-8 md:px-8">
+        <Wordmark className="text-xl" />
+        <p className="text-muted-foreground">Made in South Africa. 2026 Ollo</p>
+      </footer>
     </div>
   );
 }

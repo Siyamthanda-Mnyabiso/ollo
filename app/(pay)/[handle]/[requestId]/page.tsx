@@ -4,7 +4,7 @@ import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
 import { PayForm } from "@/components/pay/pay-form";
-import { PayShell } from "@/components/pay/page-shell";
+import { PayFrame, PaySeller, PayShell, PayTrust } from "@/components/pay/page-shell";
 import { db } from "@/lib/db";
 import { paymentRequests } from "@/lib/db/schema";
 import { formatRand } from "@/lib/money";
@@ -43,13 +43,28 @@ async function RequestPayContent({
 
   const methods = await enabledMethods(seller.id);
   return (
-    <PayShell
-      title={`Pay ${seller.displayName}`}
-      subtitle={request.description ?? `${formatRand(request.amountCents)} requested`}
-    >
-      <p className="mb-5 text-4xl font-extrabold" data-testid="request-amount">
-        {formatRand(request.amountCents)}
-      </p>
+    <PayFrame>
+      <PaySeller
+        name={seller.displayName}
+        bio={seller.bio}
+        logoUrl={seller.logoUrl}
+        verified={seller.status === "verified"}
+      />
+      <section aria-label="Payment request">
+        <p className="text-muted-foreground font-bold">Payment request</p>
+        <p className="text-5xl font-extrabold tracking-tight" data-testid="request-amount">
+          {formatRand(request.amountCents)}
+        </p>
+        {request.description ? (
+          <p className="text-muted-foreground mt-1">{request.description}</p>
+        ) : null}
+        {request.expiresAt ? (
+          <p className="text-muted-foreground">
+            Open until{" "}
+            {request.expiresAt.toLocaleDateString("en-ZA", { day: "numeric", month: "long" })}
+          </p>
+        ) : null}
+      </section>
       <PayForm
         handle={seller.handle}
         requestId={request.id}
@@ -57,7 +72,8 @@ async function RequestPayContent({
         methods={methods}
         idempotencyKey={randomUUID()}
       />
-    </PayShell>
+      <PayTrust handle={seller.handle} />
+    </PayFrame>
   );
 }
 

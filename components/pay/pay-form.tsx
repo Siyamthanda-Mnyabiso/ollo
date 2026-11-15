@@ -17,7 +17,7 @@ export function PayForm({
   idempotencyKey,
   items = [],
 }: {
-  items?: { id: string; name: string; priceLabel: string }[];
+  items?: { id: string; name: string; priceLabel: string; amountText: string }[];
   handle: string;
   requestId?: string;
   fixedAmountLabel?: string;
@@ -25,19 +25,59 @@ export function PayForm({
   idempotencyKey: string;
 }) {
   const [state, action, pending] = useActionState<PayFormState, FormData>(payNow, {});
-  const [choice, setChoice] = useState<string>(items.length ? items[0]!.id : "custom");
+  // Picking an item fills the amount with its price. Typing an amount clears the item.
+  const [itemId, setItemId] = useState("");
+  const [amount, setAmount] = useState("");
+  const chosen = items.find((i) => i.id === itemId);
+  const shown = chosen ? chosen.amountText : amount;
+  const label = requestId
+    ? fixedAmountLabel
+    : chosen
+      ? chosen.priceLabel
+      : amount.trim()
+        ? `R${amount.trim()}`
+        : undefined;
   return (
-    <form onSubmit={keepForm(action)} className="space-y-5" noValidate>
+    <form onSubmit={keepForm(action)} className="space-y-6" noValidate>
       <input type="hidden" name="handle" value={handle} />
       <input type="hidden" name="idempotencyKey" value={idempotencyKey} />
       {requestId ? <input type="hidden" name="requestId" value={requestId} /> : null}
+      {chosen ? <input type="hidden" name="item" value={chosen.id} /> : null}
       <FormError message={state.error} />
 
       {requestId ? null : (
         <>
+          <div>
+            <Label htmlFor="amount" className="mb-1.5 block font-bold">
+              Amount
+            </Label>
+            <div className="border-input bg-card focus-within:border-primary flex h-[72px] items-center gap-2 rounded-xl border-2 px-4">
+              <span className="text-muted-foreground text-3xl font-bold" aria-hidden="true">
+                R
+              </span>
+              <input
+                id="amount"
+                name={chosen ? undefined : "amount"}
+                aria-label="Amount in rand"
+                inputMode="decimal"
+                autoComplete="off"
+                placeholder="0,00"
+                value={shown}
+                onChange={(e) => {
+                  setItemId("");
+                  setAmount(e.target.value);
+                }}
+                className="text-foreground placeholder:text-muted-foreground w-full bg-transparent text-3xl font-bold outline-none"
+              />
+            </div>
+            <FieldError messages={state.fieldErrors?.amount ?? state.fieldErrors?.item} />
+          </div>
           {items.length > 0 ? (
             <fieldset>
-              <legend className="mb-1.5 font-bold">What are you paying for?</legend>
+              <legend className="mb-1.5 font-bold">
+                Or choose an item{" "}
+                <span className="text-muted-foreground font-normal">(optional)</span>
+              </legend>
               <div className="grid gap-2">
                 {items.map((i) => (
                   <label
@@ -47,10 +87,8 @@ export function PayForm({
                     <span className="flex items-center gap-3">
                       <input
                         type="radio"
-                        name="item"
-                        value={i.id}
-                        checked={choice === i.id}
-                        onChange={() => setChoice(i.id)}
+                        checked={itemId === i.id}
+                        onChange={() => setItemId(i.id)}
                         className="size-4 accent-[var(--ollo-teal-900)]"
                       />
                       {i.name}
@@ -58,35 +96,8 @@ export function PayForm({
                     <span className="font-bold">{i.priceLabel}</span>
                   </label>
                 ))}
-                <label className="border-input bg-card has-[:checked]:border-primary has-[:checked]:bg-accent flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border px-4 py-3">
-                  <input
-                    type="radio"
-                    name="item"
-                    value="custom"
-                    checked={choice === "custom"}
-                    onChange={() => setChoice("custom")}
-                    className="size-4 accent-[var(--ollo-teal-900)]"
-                  />
-                  Another amount
-                </label>
               </div>
-              <FieldError messages={state.fieldErrors?.item} />
             </fieldset>
-          ) : null}
-          {choice === "custom" ? (
-            <div>
-              <Label htmlFor="amount" className="mb-1.5 block font-bold">
-                Amount in rand
-              </Label>
-              <Input
-                id="amount"
-                name="amount"
-                inputMode="decimal"
-                autoComplete="off"
-                className="h-12"
-              />
-              <FieldError messages={state.fieldErrors?.amount} />
-            </div>
           ) : null}
         </>
       )}
@@ -103,13 +114,13 @@ export function PayForm({
 
       <div>
         <Label htmlFor="buyerName" className="mb-1.5 block font-bold">
-          Your name (optional)
+          Your name <span className="text-muted-foreground font-normal">(optional)</span>
         </Label>
         <Input id="buyerName" name="buyerName" autoComplete="name" className="h-12" />
       </div>
 
       <CtaButton type="submit" disabled={pending} className="w-full">
-        {pending ? "One moment" : fixedAmountLabel ? `Pay ${fixedAmountLabel}` : "Pay"}
+        {pending ? "One moment" : label ? `Pay ${label}` : "Pay"}
       </CtaButton>
     </form>
   );

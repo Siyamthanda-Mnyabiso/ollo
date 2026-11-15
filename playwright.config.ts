@@ -9,12 +9,27 @@ export default defineConfig({
   reporter: process.env.CI ? "github" : "list",
   use: { baseURL: "http://localhost:3000", trace: "on-first-retry" },
   projects: [
-    { name: "desktop", use: { ...devices["Desktop Chrome"] } },
-    { name: "mobile", use: { ...devices["Pixel 7"] } },
+    { name: "desktop", use: { ...devices["Desktop Chrome"] }, testIgnore: /public-live/ },
+    { name: "mobile", use: { ...devices["Pixel 7"] }, testIgnore: /public-live/ },
+    // The home page with PAYMENTS_LIVE on, served by scripts/e2e-servers.sh on port 3001.
+    ...(process.env.E2E_PROD
+      ? [
+          {
+            name: "live",
+            testMatch: /public-live/,
+            use: { ...devices["Desktop Chrome"], baseURL: "http://localhost:3001" },
+          },
+          {
+            name: "live-mobile",
+            testMatch: /public-live/,
+            use: { ...devices["Pixel 7"], baseURL: "http://localhost:3001" },
+          },
+        ]
+      : []),
   ],
   webServer: {
     // E2E_PROD=1 tests the production build, which has no first-visit compile delays.
-    command: process.env.E2E_PROD ? "pnpm build && pnpm start" : "pnpm dev",
+    command: process.env.E2E_PROD ? "bash scripts/e2e-servers.sh" : "pnpm dev",
     timeout: 300_000,
     url: "http://localhost:3000",
     reuseExistingServer: !process.env.CI,

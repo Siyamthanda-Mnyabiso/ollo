@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { items } from "@/lib/db/schema";
 import { formatRand } from "@/lib/money";
 import { PayForm } from "@/components/pay/pay-form";
-import { PayShell } from "@/components/pay/page-shell";
+import { PayFrame, PaySeller, PayTrust } from "@/components/pay/page-shell";
 import { enabledMethods, getSellerByHandle } from "@/lib/payments/service";
 
 async function PayContent({ params }: { params: PageProps<"/[handle]">["params"] }) {
@@ -19,17 +19,26 @@ async function PayContent({ params }: { params: PageProps<"/[handle]">["params"]
     .where(and(eq(items.sellerId, seller.id), eq(items.active, true)))
     .orderBy(items.name);
   return (
-    <PayShell
-      title={`Pay ${seller.displayName}`}
-      subtitle="Choose what you are paying for and how you want to pay."
-    >
+    <PayFrame>
+      <PaySeller
+        name={seller.displayName}
+        bio={seller.bio}
+        logoUrl={seller.logoUrl}
+        verified={seller.status === "verified"}
+      />
       <PayForm
         handle={seller.handle}
         methods={methods}
         idempotencyKey={randomUUID()}
-        items={rows.map((i) => ({ id: i.id, name: i.name, priceLabel: formatRand(i.priceCents) }))}
+        items={rows.map((i) => ({
+          id: i.id,
+          name: i.name,
+          priceLabel: formatRand(i.priceCents),
+          amountText: (i.priceCents / 100).toFixed(2).replace(".", ","),
+        }))}
       />
-    </PayShell>
+      <PayTrust handle={seller.handle} />
+    </PayFrame>
   );
 }
 
