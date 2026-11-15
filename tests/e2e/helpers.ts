@@ -40,8 +40,8 @@ export async function signIn(page: Page, phone: string) {
   await page.goto("/sign-in");
   await page.getByLabel(/phone/i).fill(phone);
   await page.getByRole("button", { name: "Send code" }).click();
-  await page.getByLabel(/code/i).fill("123456");
-  await page.getByRole("button", { name: "Continue" }).click();
+  await page.getByLabel("Enter your code").fill("123456");
+  await page.getByRole("button", { name: "Verify and continue" }).click();
 }
 
 export async function signOut(page: Page) {

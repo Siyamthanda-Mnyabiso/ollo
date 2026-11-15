@@ -19,6 +19,11 @@ export const serverEnvSchema = z.object({
     .enum(["true", "false", "1", "0"])
     .default("false")
     .transform((v) => v === "true" || v === "1"),
+  /** Unset: open everywhere except a real production site. See lib/auth/signups.ts. */
+  SIGNUPS_OPEN: z
+    .enum(["true", "false", "1", "0"])
+    .optional()
+    .transform((v) => (v === undefined ? undefined : v === "true" || v === "1")),
   PAYMENT_PROVIDER: z.enum(["mock", "stitch", "disabled"]).default("mock"),
   MOCK_PAYMENT_SCENARIO: z
     .enum(["success", "decline", "timeout", "duplicate_webhook", "late_webhook"])

@@ -143,3 +143,19 @@ test("help centre: payments start answer says January while the flag is off", as
   await expect(page.getByText("Payments are launching in January.")).toBeVisible();
   await expect(page.getByText("Payments are live.")).toHaveCount(0);
 });
+
+test("sign-in shows the code step with six boxes and lets you change the number", async ({
+  page,
+}) => {
+  await page.goto("/sign-in");
+  await expect(page.getByRole("tab", { name: "Sign up" })).toHaveAttribute("aria-selected", "true");
+  await page.getByLabel("Cellphone number").fill("0821234567");
+  await page.getByRole("button", { name: "Send code" }).click();
+  await expect(page.getByRole("heading", { name: "Enter your code" })).toBeVisible();
+  await expect(page.getByText("We sent a 6 digit code to +27 82 123 4567.")).toBeVisible();
+  await page.getByLabel("Enter your code").fill("12a345");
+  await expect(page.getByLabel("Enter your code")).toHaveValue("12345");
+  await expect(page.getByText(/Resend code in \d:\d\d/)).toBeVisible();
+  await page.getByRole("button", { name: "Change number" }).first().click();
+  await expect(page.getByLabel("Cellphone number")).toBeVisible();
+});

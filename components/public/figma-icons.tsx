@@ -101,3 +101,4 @@ export const CardIcon = make(24, 2.5, [
   "M3.5 10H20.5",
   "M7 14.5H10",
 ]);
+export const ChevronLeftIcon = make(24, 2.5, ["M14.5 5.5L8 12L14.5 18.5"]);
