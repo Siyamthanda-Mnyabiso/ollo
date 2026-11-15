@@ -15,6 +15,13 @@
       "when": 1794701461295,
       "tag": "0001_ledger_integrity",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1794703552165,
+      "tag": "0002_seller_onboarded_at",
+      "breakpoints": true
     }
   ]
 }

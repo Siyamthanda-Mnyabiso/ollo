@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { handleSchema } from "@/lib/handles";
-import { CATEGORIES, CHANNELS, CURRENT_PAYMENT_METHODS, SALES_RANGES } from "./options";
+import { BANKS, CATEGORIES, CHANNELS, CURRENT_PAYMENT_METHODS, SALES_RANGES } from "./options";
 
 const name = (label: string) =>
   z.string().trim().min(2, `Enter your ${label}`).max(80, `${label} is too long`);
@@ -25,3 +25,16 @@ export type BusinessInput = z.infer<typeof businessSchema>;
 
 export const linkSchema = z.object({ handle: handleSchema });
 export type LinkInput = z.infer<typeof linkSchema>;
+
+export const bankSchema = z.object({
+  bankName: z.enum(BANKS, { error: "Choose your bank" }),
+  accountNumber: z
+    .string()
+    .transform((v) => v.replace(/[\s-]/g, ""))
+    .pipe(z.string().regex(/^\d{6,16}$/, "Enter your account number using digits only")),
+  accountHolder: name("account holder name"),
+});
+export type BankInput = z.infer<typeof bankSchema>;
+
+export const planSchema = z.object({ plan: z.enum(["free", "pro"], { error: "Choose a plan" }) });
+export type PlanInput = z.infer<typeof planSchema>;

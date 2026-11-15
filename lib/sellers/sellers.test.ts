@@ -55,3 +55,25 @@ describe("onboarding schemas", () => {
     expect(linkSchema.safeParse({ handle: "admin" }).success).toBe(false);
   });
 });
+
+import { bankSchema, planSchema } from "./schemas";
+
+describe("bankSchema and planSchema", () => {
+  const ok = { bankName: "Capitec", accountNumber: "1234 5678 90", accountHolder: "Thandi Ndlovu" };
+  it("strips spaces and hyphens from the account number", () => {
+    expect(bankSchema.parse(ok).accountNumber).toBe("1234567890");
+    expect(bankSchema.parse({ ...ok, accountNumber: "1234-5678-90" }).accountNumber).toBe(
+      "1234567890",
+    );
+  });
+  it("rejects bad banks, account numbers and holders", () => {
+    expect(bankSchema.safeParse({ ...ok, bankName: "Mattress Bank" }).success).toBe(false);
+    expect(bankSchema.safeParse({ ...ok, accountNumber: "12345" }).success).toBe(false);
+    expect(bankSchema.safeParse({ ...ok, accountNumber: "12345abc67" }).success).toBe(false);
+    expect(bankSchema.safeParse({ ...ok, accountHolder: "T" }).success).toBe(false);
+  });
+  it("accepts only free or pro", () => {
+    expect(planSchema.safeParse({ plan: "pro" }).success).toBe(true);
+    expect(planSchema.safeParse({ plan: "enterprise" }).success).toBe(false);
+  });
+});

@@ -11,6 +11,8 @@ async function OnboardingIndexContent() {
   if (!state.seller) redirect("/onboarding/profile");
   if (!state.hasSurvey) redirect("/onboarding/business");
   if (!state.verification) redirect("/onboarding/link");
+  if (state.seller.onboardedAt) redirect("/dashboard");
+  if (state.verification.bankStatus === "verified") redirect("/onboarding/plan");
   return redirect("/onboarding/verify");
 }
 

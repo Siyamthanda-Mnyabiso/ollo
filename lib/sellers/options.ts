@@ -31,3 +31,32 @@ export const ONBOARDING_STEPS = [
   { slug: "bank", title: "Bank account" },
   { slug: "plan", title: "Choose a plan" },
 ] as const;
+
+export const BANKS = [
+  "Capitec",
+  "FNB",
+  "Standard Bank",
+  "Nedbank",
+  "Absa",
+  "TymeBank",
+  "Discovery Bank",
+  "African Bank",
+  "Investec",
+  "Other bank",
+] as const;
+
+export const PLAN_OPTIONS = [
+  {
+    value: "free",
+    name: "Free",
+    price: "R0 a month",
+    detail: "3% per bank payment and 3.9% per card payment. Powered by Ollo on your pay page.",
+  },
+  {
+    value: "pro",
+    name: "Pro",
+    price: "R149 a month",
+    detail:
+      "2.5% per bank payment, custom domain, no Ollo branding, insights, customer list, discount codes, staff logins and priority support.",
+  },
+] as const;

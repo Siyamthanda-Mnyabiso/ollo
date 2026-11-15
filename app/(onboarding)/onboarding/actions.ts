@@ -7,7 +7,15 @@ import { getCurrentUser } from "@/lib/auth/server";
 import { db } from "@/lib/db";
 import { auditLog, sellers, sellerSurvey, sellerVerification } from "@/lib/db/schema";
 import { handleSchema } from "@/lib/handles";
-import { businessSchema, linkSchema, profileSchema } from "@/lib/sellers/schemas";
+import {
+  bankSchema,
+  businessSchema,
+  linkSchema,
+  planSchema,
+  profileSchema,
+} from "@/lib/sellers/schemas";
+import { encryptField } from "@/lib/crypto";
+import { getPaymentProvider } from "@/lib/payments";
 import { slugify, uniqueHandle } from "@/lib/sellers/slug";
 import {
   getSellerByUserId,
@@ -131,4 +139,86 @@ export async function saveLink(_prev: ActionState, formData: FormData): Promise<
     return { fieldErrors: { handle: ["That address is taken"] } };
   }
   redirect("/onboarding/verify");
+}
+
+const BANK_FAILURE_MESSAGES = {
+  name_mismatch: "The account holder name does not match this account. Check it and try again.",
+  account_not_found: "We could not find that account. Check the bank and account number.",
+  unavailable: "The bank check is not available right now. Please try again in a few minutes.",
+} as const;
+
+/** Checks the account belongs to the seller (through the payment provider), then saves it encrypted. */
+export async function saveBank(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  const seller = await getSellerByUserId(user.id);
+  if (!seller) redirect("/onboarding/profile");
+
+  const parsed = bankSchema.safeParse({
+    bankName: formData.get("bankName"),
+    accountNumber: formData.get("accountNumber"),
+    accountHolder: formData.get("accountHolder"),
+  });
+  if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
+
+  let result;
+  try {
+    result = await getPaymentProvider().verifyBankAccount(parsed.data);
+  } catch {
+    return { error: BANK_FAILURE_MESSAGES.unavailable };
+  }
+
+  if (!result.verified) {
+    await db
+      .insert(sellerVerification)
+      .values({ sellerId: seller.id, bankStatus: "failed" })
+      .onConflictDoUpdate({ target: sellerVerification.sellerId, set: { bankStatus: "failed" } });
+    return { error: BANK_FAILURE_MESSAGES[result.reason ?? "unavailable"] };
+  }
+
+  const values = {
+    bankName: parsed.data.bankName,
+    accountNumber: encryptField(parsed.data.accountNumber),
+    accountHolder: parsed.data.accountHolder,
+    bankStatus: "verified" as const,
+  };
+  await db.transaction(async (tx) => {
+    await tx
+      .insert(sellerVerification)
+      .values({ sellerId: seller.id, ...values })
+      .onConflictDoUpdate({ target: sellerVerification.sellerId, set: values });
+    // The account number itself never goes in the audit log.
+    await tx.insert(auditLog).values({
+      actor: user.id,
+      action: "seller.bank_verified",
+      entity: "seller_verification",
+      entityId: seller.id,
+      after: { bankName: parsed.data.bankName, lastFour: parsed.data.accountNumber.slice(-4) },
+    });
+  });
+  redirect("/onboarding/plan");
+}
+
+/**
+ * Finishes onboarding. Everyone starts on Free: Pro is billed monthly and billing is not
+ * built yet, so choosing Pro is recorded as a request and never switches Pro on.
+ */
+export async function savePlan(_prev: ActionState, formData: FormData): Promise<ActionState> {
+  const user = await requireUser();
+  const seller = await getSellerByUserId(user.id);
+  if (!seller) redirect("/onboarding/profile");
+
+  const parsed = planSchema.safeParse({ plan: formData.get("plan") });
+  if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
+
+  await db.transaction(async (tx) => {
+    await tx.update(sellers).set({ onboardedAt: new Date() }).where(eq(sellers.id, seller.id));
+    await tx.insert(auditLog).values({
+      actor: user.id,
+      action: parsed.data.plan === "pro" ? "seller.pro_requested" : "seller.onboarded",
+      entity: "sellers",
+      entityId: seller.id,
+      after: { chosenPlan: parsed.data.plan, activePlan: seller.plan },
+    });
+  });
+  redirect("/onboarding/done");
 }

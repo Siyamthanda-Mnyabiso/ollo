@@ -101,6 +101,8 @@ export const sellers = rlsTable(
     logoUrl: text("logo_url"),
     plan: planEnum("plan").notNull().default("free"),
     status: sellerStatusEnum("status").notNull().default("pending"),
+    /** Set when the seller finishes onboarding. Null until then. */
+    onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
