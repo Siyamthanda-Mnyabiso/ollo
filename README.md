@@ -19,6 +19,26 @@ Next.js (App Router) and TypeScript (strict), Tailwind CSS and shadcn/ui, Supaba
 
 The environment is validated with Zod when the server starts and the app refuses to boot with a clear list of problems. Set `SKIP_ENV_VALIDATION=1` to skip this (CI builds only).
 
+## Click through it locally
+
+Runs the app against a throwaway Supabase on your machine, not the hosted project. Needs Docker running.
+
+```
+supabase start -x studio,imgproxy,edge-runtime,logflare,vector,supavisor,mailpit,postgres-meta
+```
+
+Prefix every command with `pnpm local`. It reads `supabase status` for the local connection details and does not read your local env file, so the hosted project is never touched:
+
+```
+pnpm local pnpm db:migrate              # once, and after pulling new migrations
+pnpm local pnpm seed:demo               # demo seller with items, requests, payments, a refund and payouts
+pnpm local pnpm dev                     # http://localhost:3000
+pnpm local pnpm make-admin 0821234567   # after signing in once with that number
+```
+
+Test phone numbers sign in with code `123456` and send no SMS: 0821234567, and 0821234501 to 0821234590.
+0821234590 is the demo seller. Set `PAYMENTS_LIVE=true` before `pnpm local pnpm dev` to see the live-payments copy.
+
 ## Scripts
 
 | Script                         | What it does                                                      |

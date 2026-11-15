@@ -6,9 +6,9 @@ export const sql = process.env.DATABASE_URL
   ? postgres(process.env.DATABASE_URL, { max: 1, idle_timeout: 5 })
   : null;
 
-// Each test gets its own test number (4501 to 4570 in config.toml) so tests never share a seller.
+// Each test gets its own test number (4501 to 4590 in config.toml) so tests never share a seller.
 export const phoneFor = (project: string, n: number) =>
-  `082123${4500 + n + (project === "mobile" ? 30 : 0)}`;
+  `082123${4500 + n + (project === "mobile" ? 45 : 0)}`;
 
 export async function resetSeller(phone: string) {
   if (!sql) return;
@@ -53,7 +53,7 @@ export async function reachVerifyStep(page: Page, phone: string, fullName = "Tha
   await signIn(page, phone);
   await page.waitForURL("**/onboarding/profile");
   await page.getByLabel("Full name").fill(fullName);
-  await page.getByLabel("Shop name").fill("Thandi Treats");
+  await page.getByLabel("Business name").fill("Thandi Treats");
   await page.getByLabel("Food and baking").check();
   await page.getByRole("button", { name: "Continue" }).click();
   await page.waitForURL("**/onboarding/business");

@@ -1,6 +1,6 @@
 import { createHmac } from "node:crypto";
 import { expect, test } from "@playwright/test";
-import { nextPhone, onboardSeller, resetSeller, sql } from "./helpers";
+import { nextPhone, onboardSeller, resetSeller, signIn, sql } from "./helpers";
 
 test.skip(process.env.E2E_AUTH !== "1", "Set E2E_AUTH=1 with a local Supabase to run these.");
 test.describe.configure({ mode: "serial" });
@@ -67,7 +67,8 @@ test.describe("dashboard", () => {
       fee_cents: 750,
       status: "succeeded",
       ledger_sum: 0,
-      entries: 3,
+      // 3 for the payment, plus 2 for the instant payout that bank methods trigger.
+      entries: 5,
     });
     await customer.context().close();
   });
@@ -180,5 +181,339 @@ test.describe("dashboard", () => {
     await other.goto(`/dashboard/requests/${requestId}`);
     await expect(other.getByText("This page could not be found")).toBeVisible();
     await other.context().close();
+  });
+});
+
+test.describe("payment limits", () => {
+  async function payOpenAmount(
+    browser: import("@playwright/test").Browser,
+    handle: string,
+    amount: string,
+  ) {
+    const customer = await (await browser.newContext()).newPage();
+    await customer.goto(`/${handle}`);
+    await customer.getByLabel("Instant EFT").check();
+    await customer.getByLabel("Amount in rand").fill(amount);
+    await customer.getByRole("button", { name: "Pay" }).click();
+    return customer;
+  }
+  const handleOf = async () => {
+    const [seller] =
+      await sql!`select s.handle from sellers s join auth.users u on u.id = s.user_id where u.phone = ${e164()}`;
+    return seller!.handle as string;
+  };
+
+  test("a new seller has a R5 000 limit per payment, with a clear message to the buyer", async ({
+    page,
+    browser,
+  }) => {
+    await onboardSeller(page, phone);
+    const customer = await payOpenAmount(browser, await handleOf(), "5000.01");
+    await expect(
+      customer.getByText(/can accept up to R\s?5\s?000,00 in one payment/),
+    ).toBeVisible();
+    await customer.context().close();
+  });
+
+  test("the daily limit stops a payment that would take the day over", async ({
+    page,
+    browser,
+  }) => {
+    await onboardSeller(page, phone);
+    await sql!`update sellers set limit_per_day_cents = 20000 where user_id = (select id from auth.users where phone = ${e164()})`;
+    const handle = await handleOf();
+    const first = await payOpenAmount(browser, handle, "150");
+    await expect(first.getByRole("heading", { name: "Payment received" })).toBeVisible({
+      timeout: 20_000,
+    });
+    const second = await payOpenAmount(browser, handle, "100");
+    await expect(second.getByText(/over their limit for today/)).toBeVisible();
+    await first.context().close();
+    await second.context().close();
+  });
+
+  test("a seller cannot create a request above their limit", async ({ page }) => {
+    await onboardSeller(page, phone);
+    await sql!`update sellers set limit_per_payment_cents = 10000 where user_id = (select id from auth.users where phone = ${e164()})`;
+    await page.goto("/dashboard/requests/new");
+    await page.getByLabel("Amount in rand").fill("150");
+    await page.getByRole("button", { name: "Create request" }).click();
+    await expect(page.getByText(/Your limit is R\s?100,00 per payment/)).toBeVisible();
+  });
+
+  test("an admin can change one seller's limits from the admin area", async ({ page, browser }) => {
+    // Seller A, who will be limited.
+    const sellerPage = await (await browser.newContext()).newPage();
+    await onboardSeller(sellerPage, phone);
+    const handle = await handleOf();
+
+    // Admin B.
+    const adminPhone = nextPhone(test.info().project.name);
+    await resetSeller(adminPhone);
+    await onboardSeller(page, adminPhone);
+    const adminE164 = "27" + adminPhone.replace(/\D/g, "").slice(1);
+    await sql!`update auth.users set raw_app_meta_data = raw_app_meta_data || '{"role":"admin"}'::jsonb where phone = ${adminE164}`;
+    // A fresh session so the admin role is in the token.
+    await page.context().clearCookies();
+    await signIn(page, adminPhone);
+    await page.waitForURL("**/dashboard");
+    await page.goto("/admin/sellers");
+    await page.getByRole("link", { name: new RegExp(handle) }).click();
+    await page.getByLabel("Limit per payment, in rand").fill("50");
+    await page.getByRole("button", { name: "Save limits" }).click();
+    await expect(page.getByText("Limits saved")).toBeVisible();
+
+    const customer = await payOpenAmount(browser, handle, "60");
+    await expect(customer.getByText(/can accept up to R\s?50,00 in one payment/)).toBeVisible();
+
+    const audit =
+      await sql!`select count(*)::int as n from audit_log where action = 'admin.seller_limits_changed'`;
+    expect(audit[0]!.n).toBeGreaterThan(0);
+    await customer.context().close();
+    await sellerPage.context().close();
+  });
+});
+
+async function sellerPays(
+  page: import("@playwright/test").Page,
+  browser: import("@playwright/test").Browser,
+  amount: string,
+) {
+  const path = await createRequest(page, amount);
+  const customer = await (await browser.newContext()).newPage();
+  await customer.goto(path);
+  await customer.getByLabel("PayShap").check();
+  await customer.getByRole("button", { name: /^Pay/ }).click();
+  await expect(customer.getByRole("heading", { name: "Payment received" })).toBeVisible({
+    timeout: 20_000,
+  });
+  await customer.context().close();
+}
+
+test.describe("items on the pay page", () => {
+  test("a buyer can pick an item, and its price comes from the database", async ({
+    page,
+    browser,
+  }) => {
+    await onboardSeller(page, phone);
+    await page.getByRole("link", { name: "Items" }).click();
+    await page.getByLabel("Item name").fill("Box braids");
+    await page.getByLabel("Price in rand").fill("850");
+    await page.getByRole("button", { name: "Add item" }).click();
+    await expect(page.getByText("Box braids")).toBeVisible();
+
+    const [seller] =
+      await sql!`select s.handle from sellers s join auth.users u on u.id = s.user_id where u.phone = ${e164()}`;
+    const customer = await (await browser.newContext()).newPage();
+    await customer.goto(`/${seller!.handle}`);
+    await expect(customer.getByLabel(/Box braids/)).toBeChecked();
+    await expect(customer.getByLabel("Amount in rand")).toHaveCount(0);
+    await customer.getByLabel("Capitec Pay").check();
+    await customer.getByRole("button", { name: "Pay" }).click();
+    await expect(customer.getByRole("heading", { name: "Payment received" })).toBeVisible({
+      timeout: 20_000,
+    });
+
+    const rows =
+      await sql!`select p.amount_cents, p.item_name, p.source from payments p join sellers s on s.id = p.seller_id join auth.users u on u.id = s.user_id where u.phone = ${e164()}`;
+    expect(rows[0]).toMatchObject({ amount_cents: 85000, item_name: "Box braids", source: "item" });
+
+    // "Another amount" still works.
+    const other = await (await browser.newContext()).newPage();
+    await other.goto(`/${seller!.handle}`);
+    await other.getByLabel("Another amount").check();
+    await other.getByLabel("Amount in rand").fill("40");
+    await other.getByLabel("Card").check();
+    await other.getByRole("button", { name: "Pay" }).click();
+    await expect(other.getByRole("heading", { name: "Payment received" })).toBeVisible({
+      timeout: 20_000,
+    });
+
+    // A hidden item is no longer offered.
+    await page.goto("/dashboard/items");
+    await page.getByRole("button", { name: "Hide" }).click();
+    await customer.goto(`/${seller!.handle}`);
+    await expect(customer.getByLabel(/Box braids/)).toHaveCount(0);
+    await customer.context().close();
+    await other.context().close();
+  });
+});
+
+test.describe("payments list, detail and refund", () => {
+  test("lists a payment, shows its detail, and refunds it once", async ({ page, browser }) => {
+    await onboardSeller(page, phone);
+    await sellerPays(page, browser, "200");
+
+    await page.getByRole("link", { name: "Payments" }).click();
+    await expect(page.getByText(/R\s?200,00/).first()).toBeVisible();
+    await page
+      .getByRole("link", { name: /Customer/ })
+      .first()
+      .click();
+    await expect(page.getByTestId("payment-ollo-fee")).toHaveText(/R\s?6,00/);
+    await expect(page.getByTestId("payment-you-receive")).toHaveText(/R\s?194,00/);
+
+    await page.getByRole("link", { name: "Refund this payment" }).click();
+    await page.getByRole("button", { name: /^Refund/ }).click();
+    await expect(page.getByTestId("payment-status")).toHaveText("Refunded");
+    await expect(page.getByRole("link", { name: "Refund this payment" })).toHaveCount(0);
+
+    const [sum] =
+      await sql!`select coalesce(sum(l.amount_cents),0)::int as total, count(*)::int as n from ledger_entries l join payments p on p.id = l.payment_id join sellers s on s.id = p.seller_id join auth.users u on u.id = s.user_id where u.phone = ${e164()}`;
+    expect(sum).toMatchObject({ total: 0, n: 6 });
+
+    await page.goto("/dashboard?range=30d");
+    await expect(page.getByTestId("money-in")).toHaveText(/R\s?0,00/);
+  });
+
+  test("a refund is refused once the money has been paid out", async ({ page, browser }) => {
+    await onboardSeller(page, phone);
+    await sellerPays(page, browser, "200");
+    // Simulate a payout of the whole balance straight in the ledger.
+    await sql!`
+      with s as (select s.id from sellers s join auth.users u on u.id = s.user_id where u.phone = ${e164()}),
+      acc as (select id from ledger_accounts where seller_id = (select id from s) and name = 'Seller balance'),
+      clr as (select id from ledger_accounts where seller_id is null and name = 'Stitch clearing'),
+      tx as (select gen_random_uuid() as id)
+      insert into ledger_entries (transaction_id, account_id, amount_cents, memo)
+      select tx.id, acc.id, 19400, 'test payout' from tx, acc
+      union all select tx.id, clr.id, -19400, 'test payout' from tx, clr`;
+    await page.goto("/dashboard/payments");
+    await page
+      .getByRole("link", { name: /Customer/ })
+      .first()
+      .click();
+    await page.getByRole("link", { name: "Refund this payment" }).click();
+    await page.getByRole("button", { name: /^Refund/ }).click();
+    await expect(page.getByText(/already been paid out/)).toBeVisible();
+  });
+});
+
+test.describe("payouts, payment methods, settings and sharing", () => {
+  const payoutsFor = async () =>
+    sql!`select po.amount_cents, po.status from payouts po join sellers s on s.id = po.seller_id join auth.users u on u.id = s.user_id where u.phone = ${e164()}`;
+
+  async function payWith(
+    browser: import("@playwright/test").Browser,
+    handle: string,
+    method: string,
+    amount: string,
+  ) {
+    const customer = await (await browser.newContext()).newPage();
+    await customer.goto(`/${handle}`);
+    await customer
+      .getByLabel("Another amount")
+      .check()
+      .catch(() => {});
+    await customer.getByLabel(method).check();
+    await customer.getByLabel("Amount in rand").fill(amount);
+    await customer.getByRole("button", { name: "Pay" }).click();
+    await expect(customer.getByRole("heading", { name: "Payment received" })).toBeVisible({
+      timeout: 20_000,
+    });
+    await customer.context().close();
+  }
+  const handleOf = async () =>
+    (
+      await sql!`select s.handle from sellers s join auth.users u on u.id = s.user_id where u.phone = ${e164()}`
+    )[0]!.handle as string;
+
+  test("a bank payment is paid out at once, a card payment is not", async ({ page, browser }) => {
+    await onboardSeller(page, phone);
+    const handle = await handleOf();
+    await payWith(browser, handle, "PayShap", "100"); // fee R3.00, payout R97.00
+    await payWith(browser, handle, "Card", "100"); // fee R3.90, stays in balance
+
+    const payouts = await payoutsFor();
+    expect(payouts).toHaveLength(1);
+    expect(payouts[0]).toMatchObject({ amount_cents: 9700, status: "paid" });
+
+    await page.goto("/dashboard/payouts");
+    await expect(page.getByTestId("owed")).toHaveText(/R\s?96,10/); // the card payment's R96.10
+    await expect(page.getByText(/Card payments are not paid out instantly/)).toBeVisible();
+    await expect(page.getByText(/account ending 7890/)).toBeVisible();
+  });
+
+  test("changing the bank account pauses payouts, and a failed change keeps the old account", async ({
+    page,
+    browser,
+  }) => {
+    await onboardSeller(page, phone);
+    const handle = await handleOf();
+    await page.goto("/dashboard/settings");
+
+    // A failed check must not wipe the verified account.
+    await page.getByLabel("Bank", { exact: true }).selectOption("FNB");
+    await page.getByLabel("Account number").fill("5555550000");
+    await page.getByLabel("Account holder name").fill("Thandi Ndlovu");
+    await page.getByRole("button", { name: "Check and change" }).click();
+    await expect(page.getByText("We could not find that account.")).toBeVisible();
+    await expect(page.getByText(/Capitec, account ending 7890/)).toBeVisible();
+
+    await page.getByLabel("Account number").fill("5555551234");
+    await page.getByRole("button", { name: "Check and change" }).click();
+    await expect(page.getByText(/Payouts are paused for 48 hours/)).toBeVisible();
+
+    await payWith(browser, handle, "PayShap", "100");
+    expect(await payoutsFor()).toHaveLength(0);
+    await page.goto("/dashboard/payouts");
+    await expect(page.getByTestId("payout-pause")).toBeVisible();
+    await expect(page.getByTestId("owed")).toHaveText(/R\s?97,00/);
+    await expect(page.getByText(/FNB, account ending 1234/)).toBeVisible();
+
+    // The change is in the audit log without the account number.
+    const [audit] =
+      await sql!`select after from audit_log where action = 'seller.bank_changed' order by created_at desc limit 1`;
+    expect(JSON.stringify(audit!.after)).not.toContain("5555551234");
+    expect(JSON.stringify(audit!.after)).toContain("1234");
+  });
+
+  test("switching a payment method off removes it from the pay page, and one must stay on", async ({
+    page,
+    browser,
+  }) => {
+    await onboardSeller(page, phone);
+    const handle = await handleOf();
+    await page.goto("/dashboard/payment-methods");
+    await page.getByLabel("Card").uncheck();
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("Saved")).toBeVisible();
+
+    const customer = await (await browser.newContext()).newPage();
+    await customer.goto(`/${handle}`);
+    await expect(customer.getByLabel("PayShap")).toBeVisible();
+    await expect(customer.getByLabel("Card")).toHaveCount(0);
+    await customer.context().close();
+
+    for (const m of ["PayShap", "Capitec Pay", "Instant EFT"]) await page.getByLabel(m).uncheck();
+    await page.getByRole("button", { name: "Save" }).click();
+    await expect(page.getByText("Keep at least one way to pay switched on")).toBeVisible();
+  });
+
+  test("settings shows the pay link with copy, WhatsApp and a QR code, and saves the name", async ({
+    page,
+    context,
+  }) => {
+    await onboardSeller(page, phone);
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    await page.goto("/dashboard/settings");
+    const link = (await page.getByTestId("pay-link").innerText()).trim();
+    expect(link).toMatch(/^http:\/\/localhost:3000\/[a-z0-9-]+$/);
+    await expect(page.getByTestId("qr").locator("svg")).toBeVisible();
+    await expect(page.getByRole("link", { name: "Share on WhatsApp" })).toHaveAttribute(
+      "href",
+      /wa\.me\/\?text=.*localhost/,
+    );
+    await page.getByRole("button", { name: "Copy link" }).click();
+    await expect(page.getByRole("button", { name: "Copied" })).toBeVisible();
+    expect(await page.evaluate(() => navigator.clipboard.readText())).toBe(link);
+
+    await page.getByLabel("Name on your pay page").fill("Thandi Braids");
+    await page.getByRole("button", { name: "Save", exact: true }).first().click();
+    await expect(page.getByText("Saved")).toBeVisible();
+    const customer = await (await page.context().browser()!.newContext()).newPage();
+    await customer.goto(link);
+    await expect(customer.getByRole("heading", { name: "Pay Thandi Braids" })).toBeVisible();
+    await customer.context().close();
   });
 });
