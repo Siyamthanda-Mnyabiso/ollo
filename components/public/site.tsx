@@ -172,7 +172,7 @@ export function HeroFrame({
 /** Join band at the bottom of every public page. */
 export function JoinBand({ join }: { join: LandingCopy["join"] }) {
   return (
-    <section id="join" className={`${TEAL} px-3 pb-6 md:px-6`}>
+    <section id="join" className={`${TEAL} px-3 pt-3 pb-6 md:px-6 md:pt-6`}>
       <div
         className={`flex flex-col gap-6 rounded-[32px] p-8 md:rounded-[40px] md:p-20 ${MINT_GRADIENT}`}
       >
