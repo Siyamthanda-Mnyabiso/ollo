@@ -52,7 +52,9 @@ test.describe("dashboard", () => {
 
     await page.goto("/dashboard");
     await expect(page.getByTestId("money-in")).toHaveText("R250.00");
-    await expect(page.getByText("Braids deposit").or(page.getByText("Customer", { exact: true }))).toBeVisible();
+    await expect(
+      page.getByText("Braids deposit").or(page.getByText("Customer", { exact: true })),
+    ).toBeVisible();
     await page.goto(path.replace(/^\/[^/]+\//, "/dashboard/requests/"));
     await expect(page.getByTestId("request-status")).toHaveText("Paid");
 
