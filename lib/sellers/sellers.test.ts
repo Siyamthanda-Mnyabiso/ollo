@@ -7,9 +7,9 @@ describe("slugify", () => {
     ["Thandi Hair", "thandi-hair"],
     ["Thandi's Hair!", "thandis-hair"],
     ["  Café   Noir  ", "cafe-noir"],
-    ["!!!", "shop"],
-    ["A", "shop"],
-    ["Admin", "admin-shop"],
+    ["!!!", "seller"],
+    ["A", "seller"],
+    ["Admin", "admin-seller"],
     ["x".repeat(60), "x".repeat(30)],
   ])("%s -> %s", (input, expected) => expect(slugify(input)).toBe(expected));
 });

@@ -5,9 +5,15 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { amountSchema, buyerSchema } from "@/lib/dashboard/schemas";
 import { db } from "@/lib/db";
-import { paymentRequests } from "@/lib/db/schema";
+import { items, paymentRequests } from "@/lib/db/schema";
 import { getEnv } from "@/lib/env";
-import { enabledMethods, getSellerByHandle, startPayment } from "@/lib/payments/service";
+import { limitMessage, resolveLimits } from "@/lib/limits";
+import {
+  enabledMethods,
+  getSellerByHandle,
+  PaymentLimitError,
+  startPayment,
+} from "@/lib/payments/service";
 
 export interface PayFormState {
   error?: string;
@@ -40,6 +46,7 @@ export async function payNow(_prev: PayFormState, formData: FormData): Promise<P
   let amountCents: number;
   let requestId: string | undefined;
   let description: string | undefined;
+  let item: { id: string; name: string } | undefined;
   const rawRequestId = formData.get("requestId");
   if (rawRequestId) {
     const id = z.uuid().safeParse(rawRequestId);
@@ -56,6 +63,19 @@ export async function payNow(_prev: PayFormState, formData: FormData): Promise<P
     amountCents = request.amountCents;
     requestId = request.id;
     description = request.description ?? undefined;
+  } else if (formData.get("item") && formData.get("item") !== "custom") {
+    // The price always comes from the database, never from the form.
+    const itemId = z.uuid().safeParse(formData.get("item"));
+    if (!itemId.success) return { fieldErrors: { item: ["Choose an item or enter an amount"] } };
+    const [row] = await db
+      .select()
+      .from(items)
+      .where(and(eq(items.id, itemId.data), eq(items.sellerId, seller.id), eq(items.active, true)))
+      .limit(1);
+    if (!row) return { fieldErrors: { item: ["That item is no longer available"] } };
+    amountCents = row.priceCents;
+    item = { id: row.id, name: row.name };
+    description = row.name;
   } else {
     const amount = amountSchema.safeParse(formData.get("amount"));
     if (!amount.success) {
@@ -70,7 +90,9 @@ export async function payNow(_prev: PayFormState, formData: FormData): Promise<P
     const result = await startPayment({
       sellerId: seller.id,
       plan: seller.plan,
+      limits: resolveLimits(seller),
       requestId,
+      item,
       amountCents,
       method: buyer.data.method,
       buyer: { name: buyer.data.buyerName, phone: buyer.data.buyerPhone },
@@ -79,7 +101,10 @@ export async function payNow(_prev: PayFormState, formData: FormData): Promise<P
       returnUrl: (paymentId) => `${appUrl}/${seller.handle}/done?p=${paymentId}`,
     });
     redirectUrl = result.redirectUrl ?? `${appUrl}/${seller.handle}/done?p=${result.paymentId}`;
-  } catch {
+  } catch (error) {
+    if (error instanceof PaymentLimitError) {
+      return { error: limitMessage(error.check, seller.displayName) };
+    }
     return { error: "We could not start your payment. Nothing was charged. Please try again." };
   }
   redirect(redirectUrl);

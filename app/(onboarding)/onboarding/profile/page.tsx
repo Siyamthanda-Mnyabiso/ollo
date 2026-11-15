@@ -13,7 +13,7 @@ async function ProfileStepContent() {
     <StepShell
       step={1}
       title="Tell us about you"
-      subtitle="This is how customers will see your shop."
+      subtitle="This is how customers will see your pay page."
     >
       <ProfileForm defaults={seller ?? undefined} />
     </StepShell>

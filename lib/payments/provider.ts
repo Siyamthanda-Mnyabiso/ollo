@@ -3,6 +3,8 @@ import type {
   CreatePaymentResult,
   CreatePayoutInput,
   CreatePayoutResult,
+  RefundPaymentInput,
+  RefundPaymentResult,
   PaymentStatusResult,
   VerifyBankAccountInput,
   VerifyBankAccountResult,
@@ -16,6 +18,8 @@ import type {
 export interface PaymentProvider {
   createPayment(input: CreatePaymentInput): Promise<CreatePaymentResult>;
   getPaymentStatus(providerReference: string): Promise<PaymentStatusResult>;
+  /** Returns the buyer's money. Must be idempotent on the key. */
+  refundPayment(input: RefundPaymentInput): Promise<RefundPaymentResult>;
   createPayout(input: CreatePayoutInput): Promise<CreatePayoutResult>;
   verifyBankAccount(input: VerifyBankAccountInput): Promise<VerifyBankAccountResult>;
   /** Checks the signature and parses the event. Throws InvalidWebhookError if it is not genuine. */

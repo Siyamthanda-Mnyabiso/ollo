@@ -7,6 +7,8 @@ import {
   type CreatePaymentResult,
   type CreatePayoutInput,
   type CreatePayoutResult,
+  type RefundPaymentInput,
+  type RefundPaymentResult,
   type PaymentStatusResult,
   type VerifyBankAccountInput,
   type VerifyBankAccountResult,
@@ -52,6 +54,7 @@ export class MockProvider implements PaymentProvider {
   >();
   private byReference = new Map<string, string>();
   private payouts = new Map<string, CreatePayoutResult>();
+  private refunds = new Map<string, RefundPaymentResult>();
 
   constructor(
     private readonly options: { scenario: MockScenario; webhookSecret: string } = {
@@ -102,6 +105,17 @@ export class MockProvider implements PaymentProvider {
       default:
         return { providerReference, status: "succeeded" };
     }
+  }
+
+  async refundPayment(input: RefundPaymentInput): Promise<RefundPaymentResult> {
+    const existing = this.refunds.get(input.idempotencyKey);
+    if (existing) return existing;
+    const result: RefundPaymentResult = {
+      providerReference: `mock_refund_${randomUUID()}`,
+      status: "succeeded",
+    };
+    this.refunds.set(input.idempotencyKey, result);
+    return result;
   }
 
   async createPayout(input: CreatePayoutInput): Promise<CreatePayoutResult> {

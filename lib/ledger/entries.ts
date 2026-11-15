@@ -94,3 +94,20 @@ export function payoutLines(args: {
     },
   ];
 }
+
+/**
+ * A full refund undoes the settlement exactly: Stitch clearing goes down by the amount, the seller
+ * is owed that much less, and Ollo gives its fee back.
+ */
+export function refundLines(args: {
+  paymentId: string;
+  amountCents: number;
+  feeCents: number;
+  accounts: SettlementAccounts;
+}): LedgerLine[] {
+  return paymentSettlementLines(args).map((l) => ({
+    ...l,
+    amountCents: -l.amountCents,
+    memo: l.memo === "Payment received" ? "Refund to buyer" : `Reversed: ${l.memo}`,
+  }));
+}

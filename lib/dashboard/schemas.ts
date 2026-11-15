@@ -1,5 +1,6 @@
 import { z } from "zod";
-import { MAX_PAYMENT_CENTS, MIN_PAYMENT_CENTS, parseRandsToCents } from "@/lib/money";
+import { MAX_PAYMENT_CENTS, MIN_PAYMENT_CENTS } from "@/lib/limits";
+import { parseRandsToCents } from "@/lib/money";
 import { PAYMENT_METHODS } from "@/lib/fees/config";
 
 export const amountSchema = z

@@ -5,6 +5,8 @@ import { redirect } from "next/navigation";
 import { z } from "zod";
 import { db } from "@/lib/db";
 import { auditLog, paymentRequests } from "@/lib/db/schema";
+import { REQUEST_LIFETIME_DAYS, resolveLimits } from "@/lib/limits";
+import { formatRand } from "@/lib/money";
 import { requestSchema } from "@/lib/dashboard/schemas";
 import { requireSeller } from "@/lib/dashboard/queries";
 
@@ -13,8 +15,7 @@ export interface RequestFormState {
   fieldErrors?: Record<string, string[] | undefined>;
 }
 
-/** Requests stay open for a week unless they are paid or cancelled first. */
-const REQUEST_LIFETIME_MS = 7 * 24 * 60 * 60 * 1000;
+const REQUEST_LIFETIME_MS = REQUEST_LIFETIME_DAYS * 24 * 60 * 60 * 1000;
 
 export async function createRequest(
   _prev: RequestFormState,
@@ -27,6 +28,17 @@ export async function createRequest(
   });
   if (!parsed.success) {
     return { fieldErrors: z.flattenError(parsed.error).fieldErrors as Record<string, string[]> };
+  }
+
+  const limits = resolveLimits(seller);
+  if (parsed.data.amountCents > limits.perPaymentCents) {
+    return {
+      fieldErrors: {
+        amountCents: [
+          `Your limit is ${formatRand(limits.perPaymentCents)} per payment. Ask Ollo to raise it.`,
+        ],
+      },
+    };
   }
 
   const [created] = await db

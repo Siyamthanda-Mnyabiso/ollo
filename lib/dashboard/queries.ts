@@ -82,3 +82,33 @@ export async function getRequest(sellerId: string, id: string) {
 export function listItems(sellerId: string) {
   return db.select().from(items).where(eq(items.sellerId, sellerId)).orderBy(desc(items.createdAt));
 }
+
+export const PAYMENT_STATUS_LABEL = {
+  pending: "Waiting",
+  succeeded: "Paid",
+  failed: "Failed",
+  expired: "Expired",
+  refunded: "Refunded",
+} as const;
+
+export function listPayments(sellerId: string, status?: keyof typeof PAYMENT_STATUS_LABEL) {
+  return db
+    .select()
+    .from(payments)
+    .where(
+      status
+        ? and(eq(payments.sellerId, sellerId), eq(payments.status, status))
+        : eq(payments.sellerId, sellerId),
+    )
+    .orderBy(desc(payments.createdAt))
+    .limit(100);
+}
+
+export async function getPayment(sellerId: string, id: string) {
+  const [row] = await db
+    .select()
+    .from(payments)
+    .where(and(eq(payments.id, id), eq(payments.sellerId, sellerId)))
+    .limit(1);
+  return row ?? null;
+}

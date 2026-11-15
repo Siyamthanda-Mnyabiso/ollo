@@ -1,6 +1,6 @@
 import { RESERVED_HANDLES } from "@/lib/handles";
 
-/** Turns a shop name into a handle candidate: "Thandi's Hair!" -> "thandis-hair". */
+/** Turns a business name into a handle candidate: "Thandi's Hair!" -> "thandis-hair". */
 export function slugify(name: string): string {
   const base = name
     .normalize("NFKD")
@@ -11,9 +11,9 @@ export function slugify(name: string): string {
     .replace(/^-+|-+$/g, "")
     .slice(0, 30)
     .replace(/-+$/g, "");
-  const padded = base.length >= 2 ? base : "shop";
+  const padded = base.length >= 2 ? base : "seller";
   return (RESERVED_HANDLES as readonly string[]).includes(padded)
-    ? `${padded}-shop`.slice(0, 30)
+    ? `${padded}-seller`.slice(0, 30)
     : padded;
 }
 

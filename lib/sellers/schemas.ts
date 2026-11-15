@@ -7,7 +7,7 @@ const name = (label: string) =>
 
 export const profileSchema = z.object({
   fullName: name("full name"),
-  displayName: name("shop name"),
+  displayName: name("business name"),
   category: z.enum(CATEGORIES, { error: "Choose what you sell" }),
 });
 export type ProfileInput = z.infer<typeof profileSchema>;

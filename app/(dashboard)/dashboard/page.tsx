@@ -80,7 +80,12 @@ async function HomeContent({
       </section>
 
       <Card>
-        <h2 className="text-lg font-bold">Recent payments</h2>
+        <div className="flex items-center justify-between">
+          <h2 className="text-lg font-bold">Recent payments</h2>
+          <Link href="/dashboard/payments" className="text-primary font-bold">
+            View all
+          </Link>
+        </div>
         {recent.length === 0 ? (
           <p className="text-muted-foreground mt-3">
             No payments yet. Send a payment request, or share your pay link.

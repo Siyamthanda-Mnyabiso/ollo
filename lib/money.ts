@@ -16,7 +16,3 @@ export function parseRandsToCents(input: string): number | null {
   const cents = Number(match[1]) * 100 + Number((match[2] ?? "").padEnd(2, "0") || "0");
   return Number.isSafeInteger(cents) ? cents : null;
 }
-
-/** Smallest and largest single payment Ollo accepts. */
-export const MIN_PAYMENT_CENTS = 500;
-export const MAX_PAYMENT_CENTS = 5_000_000;

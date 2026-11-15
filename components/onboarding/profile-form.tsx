@@ -32,7 +32,7 @@ export function ProfileForm({
       </div>
       <div>
         <Label htmlFor="displayName" className="mb-1.5 block font-bold">
-          Shop name
+          Business name
         </Label>
         <Input
           id="displayName"

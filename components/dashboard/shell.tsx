@@ -10,8 +10,12 @@ export const outlineLinkClass =
 
 const NAV = [
   { href: "/dashboard", label: "Home" },
+  { href: "/dashboard/payments", label: "Payments" },
   { href: "/dashboard/requests", label: "Requests" },
   { href: "/dashboard/items", label: "Items" },
+  { href: "/dashboard/payouts", label: "Payouts" },
+  { href: "/dashboard/payment-methods", label: "Payment methods" },
+  { href: "/dashboard/settings", label: "Settings" },
 ];
 
 export function DashboardShell({ children }: { children: ReactNode }) {

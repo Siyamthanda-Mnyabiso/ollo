@@ -4,6 +4,7 @@ import {
   LedgerImbalanceError,
   paymentSettlementLines,
   payoutLines,
+  refundLines,
 } from "./entries";
 
 const accounts = { stitchClearing: "clearing", sellerBalance: "seller", feeIncome: "fees" };
@@ -82,5 +83,23 @@ describe("payoutLines", () => {
     expect(() => assertBalanced(lines)).not.toThrow();
     expect(lines[0]).toMatchObject({ accountId: "seller", amountCents: 97_000 });
     expect(lines[1]).toMatchObject({ accountId: "clearing", amountCents: -97_000 });
+  });
+});
+
+describe("refundLines", () => {
+  const accounts = { stitchClearing: "clearing", sellerBalance: "seller", feeIncome: "fee" };
+  it("exactly reverses a settlement and balances", () => {
+    const settle = paymentSettlementLines({
+      paymentId: "p",
+      amountCents: 25_000,
+      feeCents: 750,
+      accounts,
+    });
+    const refund = refundLines({ paymentId: "p", amountCents: 25_000, feeCents: 750, accounts });
+    expect(() => assertBalanced(refund)).not.toThrow();
+    for (const l of settle) {
+      const r = refund.find((x) => x.accountId === l.accountId)!;
+      expect(r.amountCents).toBe(-l.amountCents);
+    }
   });
 });

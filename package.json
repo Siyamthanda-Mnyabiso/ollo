@@ -17,7 +17,10 @@
     "db:migrate": "drizzle-kit migrate",
     "check:supabase": "node scripts/check-supabase.mjs",
     "db:studio": "drizzle-kit studio",
-    "verify": "pnpm typecheck && pnpm lint && pnpm test"
+    "verify": "pnpm typecheck && pnpm lint && pnpm test",
+    "local": "bash scripts/local.sh",
+    "seed:demo": "tsx --conditions react-server --tsconfig tsconfig.json scripts/seed-demo.ts",
+    "make-admin": "node scripts/make-admin.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -29,6 +32,7 @@
     "lucide-react": "^1.72.0",
     "next": "16.4.6",
     "postgres": "^4.1.1",
+    "qrcode": "^1.5.4",
     "react": "19.3.0",
     "react-dom": "19.3.0",
     "server-only": "^0.0.1",
@@ -40,6 +44,7 @@
     "@playwright/test": "^1.65.1",
     "@tailwindcss/turbopack": "4.3.3",
     "@types/node": "^20",
+    "@types/qrcode": "^1.5.6",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@vitest/coverage-v8": "^5.1.0",

@@ -31,6 +31,18 @@ export interface PaymentStatusResult {
   failureReason?: string;
 }
 
+export interface RefundPaymentInput {
+  /** Same key, same refund. A repeat must not refund the buyer twice. */
+  idempotencyKey: string;
+  providerReference: string;
+  amountCents: number;
+}
+
+export interface RefundPaymentResult {
+  providerReference: string;
+  status: "succeeded" | "pending" | "failed";
+}
+
 export interface CreatePayoutInput {
   idempotencyKey: string;
   amountCents: number;

@@ -14,12 +14,11 @@ import {
   planSchema,
   profileSchema,
 } from "@/lib/sellers/schemas";
-import { encryptField } from "@/lib/crypto";
-import { BANK_FAILURE_MESSAGES } from "@/lib/sellers/messages";
+import { saveVerifiedBank } from "@/lib/sellers/bank";
 import { canOpenStep } from "@/lib/sellers/onboarding-steps";
 import { getOnboardingState } from "@/lib/sellers/queries";
+import { encryptField } from "@/lib/crypto";
 import { getVerificationProvider, IDENTITY_FAILURE_MESSAGES } from "@/lib/verification";
-import { getPaymentProvider } from "@/lib/payments";
 import { slugify, uniqueHandle } from "@/lib/sellers/slug";
 import {
   getSellerByUserId,
@@ -54,7 +53,7 @@ export async function saveProfile(_prev: ActionState, formData: FormData): Promi
   if (existing) {
     await db.update(sellers).set(parsed.data).where(eq(sellers.id, existing.id));
   } else {
-    // A provisional handle from the shop name. The seller confirms or changes it on the link step.
+    // A provisional handle from the business name. The seller confirms or changes it on the link step.
     const base = slugify(parsed.data.displayName);
     const handle = uniqueHandle(base, await takenHandlesWithPrefix(base.slice(0, 20)));
     try {
@@ -161,41 +160,13 @@ export async function saveBank(_prev: ActionState, formData: FormData): Promise<
   });
   if (!parsed.success) return { fieldErrors: fieldErrorsOf(parsed.error) };
 
-  let result;
-  try {
-    result = await getPaymentProvider().verifyBankAccount(parsed.data);
-  } catch {
-    return { error: BANK_FAILURE_MESSAGES.unavailable };
-  }
-
-  if (!result.verified) {
-    await db
-      .insert(sellerVerification)
-      .values({ sellerId: seller.id, bankStatus: "failed" })
-      .onConflictDoUpdate({ target: sellerVerification.sellerId, set: { bankStatus: "failed" } });
-    return { error: BANK_FAILURE_MESSAGES[result.reason ?? "unavailable"] };
-  }
-
-  const values = {
-    bankName: parsed.data.bankName,
-    accountNumber: encryptField(parsed.data.accountNumber),
-    accountHolder: parsed.data.accountHolder,
-    bankStatus: "verified" as const,
-  };
-  await db.transaction(async (tx) => {
-    await tx
-      .insert(sellerVerification)
-      .values({ sellerId: seller.id, ...values })
-      .onConflictDoUpdate({ target: sellerVerification.sellerId, set: values });
-    // The account number itself never goes in the audit log.
-    await tx.insert(auditLog).values({
-      actor: user.id,
-      action: "seller.bank_verified",
-      entity: "seller_verification",
-      entityId: seller.id,
-      after: { bankName: parsed.data.bankName, lastFour: parsed.data.accountNumber.slice(-4) },
-    });
+  const saved = await saveVerifiedBank({
+    sellerId: seller.id,
+    userId: user.id,
+    mode: "onboarding",
+    input: parsed.data,
   });
+  if (!saved.ok) return { error: saved.message };
   redirect("/onboarding/plan");
 }
 

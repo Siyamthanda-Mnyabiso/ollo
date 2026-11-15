@@ -141,3 +141,22 @@ describe("MockProvider payouts and bank checks", () => {
     ).toBe("name_mismatch");
   });
 });
+
+describe("MockProvider refunds", () => {
+  it("refunds once per idempotency key", async () => {
+    const p = make("success");
+    const created = await p.createPayment(input());
+    const a = await p.refundPayment({
+      idempotencyKey: "r1",
+      providerReference: created.providerReference,
+      amountCents: 10_000,
+    });
+    const b = await p.refundPayment({
+      idempotencyKey: "r1",
+      providerReference: created.providerReference,
+      amountCents: 10_000,
+    });
+    expect(a.status).toBe("succeeded");
+    expect(b.providerReference).toBe(a.providerReference);
+  });
+});
