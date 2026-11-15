@@ -392,26 +392,27 @@ test.describe("payments list, detail and refund", () => {
     await expect(page.getByTestId("money-in")).toHaveText(/R\s?0,00/);
   });
 
-  test("a refund is refused once the money has been paid out", async ({ page, browser }) => {
+  test("after the payout has gone out there is no refund button, only a note", async ({
+    page,
+    browser,
+  }) => {
     await onboardSeller(page, phone);
-    await sellerPays(page, browser, "200");
-    // Simulate a payout of the whole balance straight in the ledger.
-    await sql!`
-      with s as (select s.id from sellers s join auth.users u on u.id = s.user_id where u.phone = ${e164()}),
-      acc as (select id from ledger_accounts where seller_id = (select id from s) and name = 'Seller balance'),
-      clr as (select id from ledger_accounts where seller_id is null and name = 'Stitch clearing'),
-      tx as (select gen_random_uuid() as id)
-      insert into ledger_entries (transaction_id, account_id, amount_cents, memo)
-      select tx.id, acc.id, 19400, 'test payout' from tx, acc
-      union all select tx.id, clr.id, -19400, 'test payout' from tx, clr`;
+    await sellerPays(page, browser, "200"); // PayShap: paid out straight away on the mock
     await page.goto("/dashboard/payments");
     await page
       .getByRole("link", { name: /Customer/ })
       .first()
       .click();
-    await page.getByRole("link", { name: "Refund this payment" }).click();
-    await page.getByRole("button", { name: /^Refund/ }).click();
-    await expect(page.getByText(/already been paid out/)).toBeVisible();
+    await expect(page.getByTestId("paid-out-note")).toHaveText(
+      "This payment has been paid out. Arrange the refund directly with your customer.",
+    );
+    await expect(page.getByRole("link", { name: "Refund this payment" })).toHaveCount(0);
+
+    // The refund page itself sends the seller back to the payment.
+    const detail = page.url();
+    await page.goto(`${detail}/refund`);
+    await expect(page).toHaveURL(detail);
+    await expect(page.getByRole("button", { name: /^Refund/ })).toHaveCount(0);
   });
 });
 

@@ -15,7 +15,7 @@ for (const path of ["/dashboard", "/onboarding", "/onboarding/profile", "/admin"
   });
 }
 
-test("with PAYMENTS_LIVE off, the home page says Launching January and collects sign-ups", async ({
+test("with PAYMENTS_LIVE off, the home page says Launching January and has sign-up buttons", async ({
   page,
 }) => {
   await page.goto("/");
@@ -25,7 +25,11 @@ test("with PAYMENTS_LIVE off, the home page says Launching January and collects 
   await expect(page.getByText("Launching January", { exact: true })).toBeVisible();
   await expect(page.getByRole("link", { name: "Join as a founding seller" })).toBeVisible();
   await expect(page.getByRole("heading", { name: "Join as a founding seller" })).toBeVisible();
-  await expect(page.getByLabel("Cellphone number")).toBeVisible();
+  await expect(page.getByRole("link", { name: "Create your free pay page" })).toHaveAttribute(
+    "href",
+    "/sign-in",
+  );
+  await expect(page.getByLabel("Cellphone number")).toHaveCount(0);
   await expect(page.getByRole("heading", { name: "How Ollo works" })).toBeVisible();
   await expect(
     page.getByRole("heading", { name: "Everything you need to get paid" }),

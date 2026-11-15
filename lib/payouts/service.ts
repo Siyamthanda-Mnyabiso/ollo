@@ -165,3 +165,12 @@ export async function countPayoutsFor(paymentId: string) {
     .where(and(eq(payouts.paymentId, paymentId)));
   return rows.length;
 }
+
+/** True once a payout for this payment has gone out or is on its way (a failed payout does not count). */
+export async function hasPayoutFor(paymentId: string): Promise<boolean> {
+  const rows = await db
+    .select({ status: payouts.status })
+    .from(payouts)
+    .where(eq(payouts.paymentId, paymentId));
+  return rows.some((r) => r.status !== "failed");
+}

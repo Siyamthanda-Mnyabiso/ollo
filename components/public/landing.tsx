@@ -11,7 +11,6 @@ import {
   TikTokLogo,
   WhatsAppLogo,
 } from "@/components/public/platform-logos";
-import { WaitlistForm } from "@/components/public/waitlist-form";
 import { getCopy, type LandingCopy } from "@/lib/public/copy";
 
 /*
@@ -114,7 +113,7 @@ function Hero({ copy, live }: { copy: LandingCopy; live: boolean }) {
             </h1>
             <p className="max-w-[640px] text-xl">{hero.body}</p>
             <div className="flex flex-wrap items-center gap-6">
-              <Link href={live ? "/sign-in" : "#join"} className={`${PILL} ${TEAL} text-white`}>
+              <Link href="/sign-in" className={`${PILL} ${TEAL} text-white`}>
                 {hero.primaryButton}
               </Link>
               <a
@@ -315,23 +314,17 @@ function Features({ copy }: { copy: LandingCopy }) {
   );
 }
 
-function Join({ copy, live }: { copy: LandingCopy; live: boolean }) {
+function Join({ copy }: { copy: LandingCopy }) {
   return (
     <section id="join" className={`${TEAL} scroll-mt-0 px-3 pb-6 md:px-6`}>
       <div
         className={`flex flex-col gap-6 rounded-[32px] p-8 md:rounded-[40px] md:p-20 ${MINT_GRADIENT}`}
       >
         <h2 className="text-4xl leading-tight font-bold md:text-[56px]">{copy.join.title}</h2>
-        {copy.join.body ? <p className="text-xl">{copy.join.body}</p> : null}
-        {live ? (
-          <Link href="/sign-in" className={`${PILL} ${TEAL} self-start text-white`}>
-            {copy.join.button}
-          </Link>
-        ) : (
-          <div className="max-w-md">
-            <WaitlistForm />
-          </div>
-        )}
+        <p className="text-xl">{copy.join.body}</p>
+        <Link href="/sign-in" className={`${PILL} ${TEAL} self-start text-white`}>
+          {copy.join.button}
+        </Link>
       </div>
     </section>
   );
@@ -387,7 +380,7 @@ export function Landing({ live }: { live: boolean }) {
           <How copy={copy} />
           <Features copy={copy} />
         </div>
-        <Join copy={copy} live={live} />
+        <Join copy={copy} />
       </main>
       <Footer copy={copy} />
     </div>

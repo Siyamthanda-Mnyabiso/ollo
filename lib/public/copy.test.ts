@@ -29,6 +29,11 @@ describe.each([
       "A pay link, a simple checkout and one place to see every payment.",
     );
     expect(copy.how.steps[0]!.body).toBe("Pick your link, add your business name and logo.");
+    expect(copy.how.steps[2]!.title).toBe("Customers pay");
+    expect(copy.how.steps[3]!.title).toBe("Money in your bank");
+    expect(copy.features.items[2]!.body).toBe(
+      "See every payment and customer without scrolling through chats.",
+    );
     expect(copy.how.steps[2]!.body).toBe(
       "Customers tap your link, pay from their banking app, and the money goes to your bank account.",
     );
@@ -48,19 +53,28 @@ describe.each([
 });
 
 describe("the flag", () => {
-  it("off: Launching January label, founding seller button and band", () => {
+  it("off: Launching January label, founding seller button, original band button, payouts from January", () => {
     const copy = getCopy(false);
     expect(copy.hero.label).toBe("Launching January");
     expect(copy.hero.primaryButton).toBe("Join as a founding seller");
     expect(copy.join.title).toBe("Join as a founding seller");
-    expect(copy.join.body).toMatch(/Payments are coming soon/);
+    expect(copy.join.body).toBe(
+      "Payments are coming soon. Set up your pay page now and be first in line.",
+    );
+    expect(copy.join.button).toBe("Create your free pay page");
+    expect(copy.how.steps[3]!.body).toBe("Payouts go straight to your bank account. From January.");
+    expect(copy.features.items[3]!.body).toBe(
+      "Payouts go straight to your bank account. From January.",
+    );
   });
-  it("on: Get your pay link, no label, Start getting paid today", () => {
+  it("on: Get your pay link, no label, Start getting paid today, no coming soon", () => {
     const copy = getCopy(true);
     expect(copy.hero.label).toBeNull();
     expect(copy.hero.primaryButton).toBe("Get your pay link");
     expect(copy.join.title).toBe("Start getting paid today");
-    expect(JSON.stringify(copy)).not.toMatch(/Launching|founding/);
+    expect(copy.join.body).toBe("Set up your pay link in minutes and share it anywhere you sell.");
+    expect(copy.how.steps[3]!.body).toBe("Payouts go straight to your bank account.");
+    expect(JSON.stringify(copy)).not.toMatch(/Launching|founding|coming soon|From January/i);
   });
 });
 

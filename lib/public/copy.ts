@@ -28,7 +28,7 @@ export interface LandingCopy {
   strip: { title: string; inPerson: string };
   how: { title: string; steps: { title: string; body: string }[]; payoutCard: { label: string } };
   features: { title: string; items: { number: string; title: string; body: string }[] };
-  join: { title: string; body: string | null; button: string };
+  join: { title: string; body: string; button: string };
   footer: {
     tagline: string;
     product: string[];
@@ -38,9 +38,14 @@ export interface LandingCopy {
   };
 }
 
+const PAYOUTS_LINE = {
+  live: "Payouts go straight to your bank account.",
+  prelaunch: "Payouts go straight to your bank account. From January.",
+};
+
 const PAID_STATUS = "Paid in seconds with pay by bank";
 
-const shared = {
+const shared = (live: boolean) => ({
   nav: {
     howItWorks: "How it works",
     pricing: "Pricing",
@@ -56,10 +61,10 @@ const shared = {
       { title: "Set up your pay page", body: "Pick your link, add your business name and logo." },
       { title: "Share your link", body: "Put it in your Instagram bio or send it on WhatsApp." },
       {
-        title: "Get paid",
+        title: "Customers pay",
         body: "Customers tap your link, pay from their banking app, and the money goes to your bank account.",
       },
-      { title: "Then get paid", body: "Payouts go straight to your bank. Coming soon." },
+      { title: "Money in your bank", body: PAYOUTS_LINE[live ? "live" : "prelaunch"] },
     ],
   },
   features: {
@@ -78,13 +83,9 @@ const shared = {
       {
         number: "03",
         title: "Payments in one place",
-        body: "See every order request and customer without scrolling chats.",
+        body: "See every payment and customer without scrolling through chats.",
       },
-      {
-        number: "04",
-        title: "Get paid faster",
-        body: "Payouts straight to your bank. Coming soon.",
-      },
+      { number: "04", title: "Get paid faster", body: PAYOUTS_LINE[live ? "live" : "prelaunch"] },
     ],
   },
   footer: {
@@ -94,7 +95,7 @@ const shared = {
     legal: ["Terms of service", "Privacy policy"],
     legalLine: "Made in South Africa. 2026 Ollo",
   },
-};
+});
 
 const hero = {
   title: "Get paid for what you sell online",
@@ -107,13 +108,17 @@ const hero = {
 };
 
 export const COPY_LIVE: LandingCopy = {
-  ...shared,
+  ...shared(true),
   hero: { ...hero, label: null, primaryButton: "Get your pay link" },
-  join: { title: "Start getting paid today", body: null, button: "Get your pay link" },
+  join: {
+    title: "Start getting paid today",
+    body: "Set up your pay link in minutes and share it anywhere you sell.",
+    button: "Get your pay link",
+  },
 };
 
 export const COPY_PRELAUNCH: LandingCopy = {
-  ...shared,
+  ...shared(false),
   hero: {
     ...hero,
     label: `Launching ${LAUNCH_MONTH}`,
@@ -122,7 +127,7 @@ export const COPY_PRELAUNCH: LandingCopy = {
   join: {
     title: "Join as a founding seller",
     body: "Payments are coming soon. Set up your pay page now and be first in line.",
-    button: "Join as a founding seller",
+    button: "Create your free pay page",
   },
 };
 

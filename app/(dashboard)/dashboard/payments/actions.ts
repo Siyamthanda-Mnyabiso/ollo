@@ -9,9 +9,12 @@ export interface RefundState {
   error?: string;
 }
 
+import { PAID_OUT_MESSAGE } from "@/lib/payments/labels";
+
 const MESSAGES: Record<RefundError["code"], string> = {
   not_found: "We could not find that payment.",
   not_refundable: "Only a paid payment can be refunded, and only once.",
+  paid_out: PAID_OUT_MESSAGE,
   insufficient_balance:
     "You do not have enough balance to refund this payment, because it has already been paid out to your bank.",
   provider_failed: "The refund could not be sent. Nothing changed. Please try again.",

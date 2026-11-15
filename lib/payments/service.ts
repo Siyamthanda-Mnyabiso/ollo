@@ -18,7 +18,7 @@ import {
   startOfDaySouthAfrica,
   type LimitCheck,
 } from "@/lib/limits";
-import { payoutOnConfirmation } from "@/lib/payouts/service";
+import { hasPayoutFor, payoutOnConfirmation } from "@/lib/payouts/service";
 import { getPaymentProvider } from "./index";
 import { ProviderTimeoutError, type ProviderPaymentStatus } from "./types";
 
@@ -292,7 +292,7 @@ export async function sellerOwedCents(conn: DbOrTx, sellerId: string): Promise<n
 export class RefundError extends Error {
   constructor(
     public readonly code:
-      "not_found" | "not_refundable" | "insufficient_balance" | "provider_failed",
+      "not_found" | "not_refundable" | "paid_out" | "insufficient_balance" | "provider_failed",
   ) {
     super(`Refund refused: ${code}`);
     this.name = "RefundError";
@@ -318,6 +318,8 @@ export async function refundSellerPayment(args: {
   if (!payment) throw new RefundError("not_found");
   if (payment.status !== "succeeded" || !payment.providerReference)
     throw new RefundError("not_refundable");
+  // For launch a refund is only possible before the payout has gone out.
+  if (await hasPayoutFor(payment.id)) throw new RefundError("paid_out");
   if ((await sellerOwedCents(db, args.sellerId)) < payment.amountCents - payment.feeCents) {
     throw new RefundError("insufficient_balance");
   }

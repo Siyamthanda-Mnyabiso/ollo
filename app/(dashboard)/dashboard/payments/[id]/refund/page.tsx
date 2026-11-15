@@ -5,6 +5,7 @@ import { Card } from "@/components/dashboard/shell";
 import { RefundForm } from "@/components/dashboard/refund-form";
 import { getPayment, requireSeller } from "@/lib/dashboard/queries";
 import { formatRand } from "@/lib/money";
+import { hasPayoutFor } from "@/lib/payouts/service";
 
 export const metadata = { title: "Refund payment" };
 
@@ -18,7 +19,8 @@ async function RefundContent({
   if (!id.success) notFound();
   const p = await getPayment(seller.id, id.data);
   if (!p) notFound();
-  if (p.status !== "succeeded") redirect(`/dashboard/payments/${p.id}`);
+  if (p.status !== "succeeded" || (await hasPayoutFor(p.id)))
+    redirect(`/dashboard/payments/${p.id}`);
   const amount = formatRand(p.amountCents);
   return (
     <div className="mx-auto max-w-xl space-y-6">

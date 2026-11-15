@@ -12,6 +12,10 @@ test("with PAYMENTS_LIVE on, the home page describes live payments", async ({ pa
   await expect(page.getByLabel("Cellphone number")).toHaveCount(0);
   await expect(page.getByRole("link", { name: "Get your pay link" }).first()).toBeVisible();
   await expect(page.getByRole("heading", { name: "Start getting paid today" })).toBeVisible();
+  await expect(
+    page.getByText("Set up your pay link in minutes and share it anywhere you sell."),
+  ).toBeVisible();
+  await expect(page.getByText(/coming soon|From January/i)).toHaveCount(0);
   await expect(page.getByText("Paid in seconds with pay by bank").first()).toBeVisible();
   await expect(page.getByText(/\b(shop|store)\b/i)).toHaveCount(0);
 });

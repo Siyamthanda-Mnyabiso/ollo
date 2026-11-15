@@ -4,7 +4,8 @@ import { Suspense } from "react";
 import { z } from "zod";
 import { Card, outlineLinkClass } from "@/components/dashboard/shell";
 import { getPayment, PAYMENT_STATUS_LABEL, requireSeller } from "@/lib/dashboard/queries";
-import { METHOD_LABELS } from "@/lib/payments/labels";
+import { METHOD_LABELS, PAID_OUT_MESSAGE } from "@/lib/payments/labels";
+import { hasPayoutFor } from "@/lib/payouts/service";
 import { formatRand } from "@/lib/money";
 
 export const metadata = { title: "Payment" };
@@ -20,6 +21,7 @@ async function PaymentContent({
   const p = await getPayment(seller.id, id.data);
   if (!p) notFound();
 
+  const paidOut = p.status === "succeeded" && (await hasPayoutFor(p.id));
   const rows: [string, string][] = [
     ["Status", PAYMENT_STATUS_LABEL[p.status]],
     ["Customer", p.buyerName || "Not given"],
@@ -56,7 +58,11 @@ async function PaymentContent({
           ))}
         </dl>
       </Card>
-      {p.status === "succeeded" ? (
+      {paidOut ? (
+        <p className="bg-accent rounded-2xl p-4" data-testid="paid-out-note">
+          {PAID_OUT_MESSAGE}
+        </p>
+      ) : p.status === "succeeded" ? (
         <Link href={`/dashboard/payments/${p.id}/refund`} className={outlineLinkClass}>
           Refund this payment
         </Link>
