@@ -103,9 +103,18 @@ export const sellers = rlsTable(
     status: sellerStatusEnum("status").notNull().default("pending"),
     /** Set when the seller finishes onboarding. Null until then. */
     onboardedAt: timestamp("onboarded_at", { withTimezone: true }),
+    /** Null means the default in lib/limits.ts. Only an admin changes these. */
+    limitPerPaymentCents: integer("limit_per_payment_cents"),
+    limitPerDayCents: integer("limit_per_day_cents"),
+    /** No payouts are sent before this time. Set when the bank account changes. */
+    payoutsPausedUntil: timestamp("payouts_paused_until", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
+    check(
+      "sellers_limits_positive",
+      sql`(${t.limitPerPaymentCents} is null or ${t.limitPerPaymentCents} > 0) and (${t.limitPerDayCents} is null or ${t.limitPerDayCents} > 0)`,
+    ),
     uniqueIndex("sellers_handle_unique").on(t.handle),
     check("sellers_handle_format", sql`${t.handle} ~ '^[a-z0-9][a-z0-9-]{1,29}$'`),
     pgPolicy("sellers_select_own", {
@@ -225,6 +234,10 @@ export const payments = rlsTable(
     source: paymentSourceEnum("source").notNull(),
     /** Set when the payment is for a payment request. */
     requestId: uuid("request_id").references(() => paymentRequests.id),
+    /** Set when the buyer picked one of the seller's items. */
+    itemId: uuid("item_id").references(() => items.id),
+    /** The item's name at the time, so a later rename or price change does not rewrite history. */
+    itemName: text("item_name"),
     amountCents: integer("amount_cents").notNull(),
     feeCents: integer("fee_cents").notNull(),
     method: paymentMethodEnum("method").notNull(),
@@ -340,3 +353,18 @@ export const auditLog = rlsTable("audit_log", {
   after: jsonb("after"),
   createdAt: createdAt(),
 });
+
+// ---- pre-launch sign-ups ----------------------------------------------------
+
+/** People who asked to be told when Ollo launches (shown while PAYMENTS_LIVE is off). */
+export const waitlistSignups = rlsTable(
+  "waitlist_signups",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** E.164, for example +27824567890. */
+    phone: text("phone").notNull(),
+    name: text("name"),
+    createdAt: createdAt(),
+  },
+  (t) => [uniqueIndex("waitlist_signups_phone_unique").on(t.phone)],
+);

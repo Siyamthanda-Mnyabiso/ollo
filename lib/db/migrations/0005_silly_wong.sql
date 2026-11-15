@@ -1,0 +1,3 @@
+ALTER TABLE "sellers" ADD COLUMN "limit_per_payment_cents" integer;--> statement-breakpoint
+ALTER TABLE "sellers" ADD COLUMN "limit_per_day_cents" integer;--> statement-breakpoint
+ALTER TABLE "sellers" ADD CONSTRAINT "sellers_limits_positive" CHECK (("sellers"."limit_per_payment_cents" is null or "sellers"."limit_per_payment_cents" > 0) and ("sellers"."limit_per_day_cents" is null or "sellers"."limit_per_day_cents" > 0));

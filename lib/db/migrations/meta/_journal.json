@@ -36,6 +36,34 @@
       "when": 1794709702072,
       "tag": "0004_unknown_thor_girl",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1794734851150,
+      "tag": "0005_silly_wong",
+      "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1794735121579,
+      "tag": "0006_flippant_madame_masque",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1794735248992,
+      "tag": "0007_regular_fantastic_four",
+      "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1794735351637,
+      "tag": "0008_motionless_vector",
+      "breakpoints": true
     }
   ]
 }

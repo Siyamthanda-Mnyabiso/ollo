@@ -14,6 +14,11 @@ export const serverEnvSchema = z.object({
   DATABASE_URL: z.string().startsWith("postgres"),
   /** AES-256 key for ID and account number encryption. */
   FIELD_ENCRYPTION_KEY: base64Key32,
+  /** Off: public pages say "Launching January" and collect sign-ups. On: they describe live payments. */
+  PAYMENTS_LIVE: z
+    .enum(["true", "false", "1", "0"])
+    .default("false")
+    .transform((v) => v === "true" || v === "1"),
   PAYMENT_PROVIDER: z.enum(["mock", "stitch"]).default("mock"),
   MOCK_PAYMENT_SCENARIO: z
     .enum(["success", "decline", "timeout", "duplicate_webhook", "late_webhook"])
@@ -36,6 +41,16 @@ export function getEnv(source: NodeJS.ProcessEnv = process.env): ServerEnv {
   if (!result.success) {
     const lines = result.error.issues.map((i) => `  - ${i.path.join(".")}: ${i.message}`);
     throw new Error(`Invalid environment variables:\n${lines.join("\n")}`);
+  }
+  if (result.data.NODE_ENV === "production" && result.data.PAYMENT_PROVIDER === "mock") {
+    // The mock never moves money. It may run in a production build only for end-to-end tests,
+    // which use a local Supabase. Anywhere else the app refuses to start.
+    const host = new URL(result.data.NEXT_PUBLIC_SUPABASE_URL).hostname;
+    if (!["localhost", "127.0.0.1", "::1", "[::1]"].includes(host)) {
+      throw new Error(
+        "PAYMENT_PROVIDER=mock is not allowed when NODE_ENV=production. Set PAYMENT_PROVIDER=stitch.",
+      );
+    }
   }
   if (result.data.PAYMENT_PROVIDER === "stitch") {
     const missing = (

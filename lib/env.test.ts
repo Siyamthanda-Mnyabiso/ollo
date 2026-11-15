@@ -32,4 +32,40 @@ describe("getEnv", () => {
       getEnv({ ...valid, PAYMENT_PROVIDER: "stitch" } as unknown as NodeJS.ProcessEnv),
     ).toThrow(/STITCH_CLIENT_ID/);
   });
+
+  describe("mock payments in production", () => {
+    const prod = (extra: Record<string, string>) =>
+      ({ ...valid, NODE_ENV: "production", ...extra }) as unknown as NodeJS.ProcessEnv;
+
+    it("refuses to start with the mock provider and NODE_ENV=production", () => {
+      expect(() =>
+        getEnv(
+          prod({
+            PAYMENT_PROVIDER: "mock",
+            NEXT_PUBLIC_SUPABASE_URL: "https://abcd.supabase.co",
+          }),
+        ),
+      ).toThrow(/mock is not allowed when NODE_ENV=production/);
+    });
+
+    it("refuses when the provider is left unset, because the default is the mock", () => {
+      expect(() => getEnv(prod({ NEXT_PUBLIC_SUPABASE_URL: "https://abcd.supabase.co" }))).toThrow(
+        /mock is not allowed/,
+      );
+    });
+
+    it("allows the mock in a production build only against a local Supabase (end-to-end tests)", () => {
+      expect(getEnv(prod({ PAYMENT_PROVIDER: "mock" })).PAYMENT_PROVIDER).toBe("mock");
+    });
+
+    it("allows the mock in development", () => {
+      expect(
+        getEnv({
+          ...valid,
+          NODE_ENV: "development",
+          NEXT_PUBLIC_SUPABASE_URL: "https://abcd.supabase.co",
+        } as unknown as NodeJS.ProcessEnv).PAYMENT_PROVIDER,
+      ).toBe("mock");
+    });
+  });
 });

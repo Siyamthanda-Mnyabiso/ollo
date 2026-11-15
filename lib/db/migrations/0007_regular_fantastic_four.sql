@@ -1,0 +1,1 @@
+ALTER TABLE "sellers" ADD COLUMN "payouts_paused_until" timestamp with time zone;
