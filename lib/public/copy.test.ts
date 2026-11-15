@@ -1,5 +1,13 @@
 import { describe, expect, it } from "vitest";
-import { LEGAL_NOTICE, LEGAL_PLACEHOLDER, PRICING, PRIVACY, TERMS } from "./pages";
+import {
+  HELP,
+  helpAnswer,
+  LEGAL_NOTICE,
+  LEGAL_PLACEHOLDER,
+  PRICING,
+  PRIVACY,
+  TERMS,
+} from "./pages";
 import { COPY_LIVE, COPY_PRELAUNCH, getCopy } from "./copy";
 
 const strings = (value: unknown): string[] =>
@@ -96,5 +104,23 @@ describe("legal pages", () => {
     expect(LEGAL_PLACEHOLDER).toMatch(/lawyer/);
     expect(TERMS.sections).toHaveLength(9);
     expect(PRIVACY.sections).toHaveLength(7);
+  });
+});
+
+describe("help centre answers", () => {
+  const when = HELP.questions.find((q) => q.question === "When will payments start?")!;
+  it("answers every question", () => {
+    for (const q of HELP.questions) expect(q.answer.length).toBeGreaterThan(0);
+  });
+  it("says payments are launching in January while the flag is off", () => {
+    expect(helpAnswer(when, false)).toContain("launching in January");
+  });
+  it("says payments are live once the flag is on", () => {
+    expect(helpAnswer(when, true)).toMatch(/^Payments are live\./);
+    expect(helpAnswer(when, true)).not.toContain("January");
+  });
+  it("never uses the banned wording", () => {
+    for (const q of HELP.questions)
+      expect(JSON.stringify(q)).not.toMatch(/instantly|\bshop\b|\bstore\b/i);
   });
 });

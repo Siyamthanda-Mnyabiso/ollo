@@ -9,7 +9,7 @@ export default function Page() {
   return (
     <Suspense fallback={null}>
       <LivePage active="/help" title={HELP.hero.title}>
-        <HelpBody />
+        {(live) => <HelpBody live={live} />}
       </LivePage>
     </Suspense>
   );

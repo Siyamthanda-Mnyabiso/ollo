@@ -137,3 +137,9 @@ test("about shows the three beliefs from the frame", async ({ page }) => {
     await expect(page.getByRole("heading", { name: t })).toBeVisible();
   }
 });
+
+test("help centre: payments start answer says January while the flag is off", async ({ page }) => {
+  await page.goto("/help");
+  await expect(page.getByText("Payments are launching in January.")).toBeVisible();
+  await expect(page.getByText("Payments are live.")).toHaveCount(0);
+});

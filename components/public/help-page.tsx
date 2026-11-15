@@ -1,11 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { ChevronDownIcon, ChevronRightIcon, SearchIcon } from "@/components/public/figma-icons";
+import { ChevronDownIcon, SearchIcon } from "@/components/public/figma-icons";
 import { PrimaryLink } from "@/components/public/page-shell";
-import { HELP } from "@/lib/public/pages";
+import { HELP, helpAnswer } from "@/lib/public/pages";
 
-export function HelpBody() {
+export function HelpBody({ live }: { live: boolean }) {
   const [query, setQuery] = useState("");
   const q = query.trim().toLowerCase();
   const shown = HELP.questions.filter((x) => !q || x.question.toLowerCase().includes(q));
@@ -38,13 +38,9 @@ export function HelpBody() {
             <div className="flex flex-col gap-2 p-4">
               <div className="flex items-center gap-4">
                 <h2 className="flex-1 text-xl leading-7 font-bold">{item.question}</h2>
-                {item.answer ? (
-                  <ChevronDownIcon className="shrink-0" />
-                ) : (
-                  <ChevronRightIcon className="shrink-0" />
-                )}
+                <ChevronDownIcon className="shrink-0" />
               </div>
-              {item.answer ? <p className="text-[var(--ollo-ink-500)]">{item.answer}</p> : null}
+              <p className="text-[var(--ollo-ink-500)]">{helpAnswer(item, live)}</p>
             </div>
           </div>
         ))}

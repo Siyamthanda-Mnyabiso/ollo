@@ -19,3 +19,9 @@ test("with PAYMENTS_LIVE on, the home page describes live payments", async ({ pa
   await expect(page.getByText("Paid in seconds with pay by bank").first()).toBeVisible();
   await expect(page.getByText(/\b(shop|store)\b/i)).toHaveCount(0);
 });
+
+test("with PAYMENTS_LIVE on, the help centre says payments are live", async ({ page }) => {
+  await page.goto("/help");
+  await expect(page.getByText(/^Payments are live\./)).toBeVisible();
+  await expect(page.getByText("launching in January")).toHaveCount(0);
+});

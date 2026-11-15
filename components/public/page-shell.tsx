@@ -63,12 +63,13 @@ export async function LivePage({
   title: string;
   subtitle?: string;
   active?: string;
-  children: ReactNode;
+  children: ReactNode | ((live: boolean) => ReactNode);
 }) {
   await connection();
+  const live = getEnv().PAYMENTS_LIVE;
   return (
-    <PublicPage live={getEnv().PAYMENTS_LIVE} title={title} subtitle={subtitle} active={active}>
-      {children}
+    <PublicPage live={live} title={title} subtitle={subtitle} active={active}>
+      {typeof children === "function" ? children(live) : children}
     </PublicPage>
   );
 }

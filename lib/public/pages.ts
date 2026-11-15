@@ -86,6 +86,17 @@ export const ABOUT = {
   ],
 };
 
+export interface HelpQuestion {
+  question: string;
+  answer: string;
+  /** Shown instead of `answer` when PAYMENTS_LIVE is on. */
+  liveAnswer?: string;
+}
+
+export function helpAnswer(item: HelpQuestion, live: boolean): string {
+  return live && item.liveAnswer ? item.liveAnswer : item.answer;
+}
+
 export const HELP = {
   hero: { title: "How can we help?" },
   searchLabel: "Search for answers",
@@ -96,12 +107,34 @@ export const HELP = {
       answer:
         "Ollo gives you a pay link, so customers can pay you in seconds without installing an app.",
     },
-    { question: "Do I need a website?", answer: null },
-    { question: "How much does it cost?", answer: null },
-    { question: "How do customers pay today?", answer: null },
-    { question: "When will payments start?", answer: null },
-    { question: "Is my information safe?", answer: null },
-  ],
+    {
+      question: "Do I need a website?",
+      answer:
+        "No. Your pay link opens your pay page, where customers see your name and pay you. There is nothing to build.",
+    },
+    {
+      question: "How much does it cost?",
+      answer:
+        "Making a pay link is free. On the free plan, bank payments cost 3% and card payments 3.9%. Pro is R149 a month with 2.5% on bank payments. The smallest fee on any payment is R1.",
+    },
+    {
+      question: "How do customers pay today?",
+      answer:
+        "Customers open your pay link and pay from their banking app or by card. You choose which payment methods to switch on.",
+    },
+    {
+      question: "When will payments start?",
+      answer:
+        "Payments are launching in January. Until then you can set up your pay page. Once payments are live, the money goes to your bank account.",
+      liveAnswer:
+        "Payments are live. Once your account is verified, customers can pay you through your pay link and the money goes to your bank account.",
+    },
+    {
+      question: "Is my information safe?",
+      answer:
+        "Your ID number and bank details are stored encrypted, and we use them only to verify you and pay you. Payments are handled by our payment partner, so Ollo never sees or stores your customers' card or banking login details.",
+    },
+  ] as HelpQuestion[],
   stillNeedHelp: {
     title: "Still need help?",
     body: "Send us a message and we will get back to you.",
