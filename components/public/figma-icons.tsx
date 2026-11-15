@@ -6,7 +6,7 @@ import type { ReactNode, SVGProps } from "react";
  */
 type Props = Omit<SVGProps<SVGSVGElement>, "children"> & { size?: number };
 
-function make(box: number, strokeWidth: number, paths: string[]) {
+export function make(box: number, strokeWidth: number, paths: string[]) {
   return function Icon({ size = box, ...rest }: Props): ReactNode {
     return (
       <svg

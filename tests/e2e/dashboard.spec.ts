@@ -16,8 +16,7 @@ test.beforeEach(async ({ page }, testInfo) => {
 const e164 = () => "27" + phone.replace(/\D/g, "").slice(1);
 
 async function createRequest(page: import("@playwright/test").Page, amount: string, note?: string) {
-  await page.getByRole("link", { name: "Request payment" }).first().click();
-  await page.waitForURL("**/dashboard/requests/new");
+  await page.goto("/dashboard/requests/new");
   await page.getByLabel("Amount in rand").fill(amount);
   if (note) await page.getByLabel(/What is it for/).fill(note);
   await page.getByRole("button", { name: "Create request" }).click();
@@ -27,11 +26,11 @@ async function createRequest(page: import("@playwright/test").Page, amount: stri
 }
 
 test.describe("dashboard", () => {
-  test("starts empty, with a Request payment button", async ({ page }) => {
+  test("starts empty, with an Add item button", async ({ page }) => {
     await onboardSeller(page, phone);
-    await expect(page.getByTestId("money-in")).toHaveText(/R\s?0,00/);
+    await expect(page.getByTestId("money-in")).toHaveText("R0.00");
     await expect(page.getByText("No payments yet")).toBeVisible();
-    await expect(page.getByRole("link", { name: "Request payment" })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Add item" })).toBeVisible();
   });
 
   test("a request can be paid on the public page, and shows in money in", async ({
@@ -52,8 +51,8 @@ test.describe("dashboard", () => {
     });
 
     await page.goto("/dashboard");
-    await expect(page.getByTestId("money-in")).toHaveText(/R\s?250,00/);
-    await expect(page.getByText("Braids deposit").or(page.getByText("Customer"))).toBeVisible();
+    await expect(page.getByTestId("money-in")).toHaveText("R250.00");
+    await expect(page.getByText("Braids deposit").or(page.getByText("Customer", { exact: true }))).toBeVisible();
     await page.goto(path.replace(/^\/[^/]+\//, "/dashboard/requests/"));
     await expect(page.getByTestId("request-status")).toHaveText("Paid");
 
@@ -389,7 +388,7 @@ test.describe("payments list, detail and refund", () => {
     expect(sum).toMatchObject({ total: 0, n: 6 });
 
     await page.goto("/dashboard?range=30d");
-    await expect(page.getByTestId("money-in")).toHaveText(/R\s?0,00/);
+    await expect(page.getByTestId("money-in")).toHaveText("R0.00");
   });
 
   test("after the payout has gone out there is no refund button, only a note", async ({

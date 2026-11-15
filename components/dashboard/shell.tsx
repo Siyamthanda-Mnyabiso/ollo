@@ -1,6 +1,7 @@
 import Link from "next/link";
-import type { ReactNode } from "react";
-import { Wordmark } from "@/components/onboarding/ui";
+import { Suspense, type ReactNode } from "react";
+import { OlloLogo } from "@/components/brand/logo";
+import { SidebarNav, TabBar } from "@/components/dashboard/nav";
 import { cn } from "@/lib/utils";
 
 export const ctaLinkClass =
@@ -8,38 +9,34 @@ export const ctaLinkClass =
 export const outlineLinkClass =
   "inline-flex h-12 items-center justify-center rounded-xl border border-primary px-6 text-base font-bold text-primary hover:bg-accent";
 
-const NAV = [
-  { href: "/dashboard", label: "Home" },
-  { href: "/dashboard/payments", label: "Payments" },
-  { href: "/dashboard/requests", label: "Requests" },
-  { href: "/dashboard/items", label: "Items" },
-  { href: "/dashboard/payouts", label: "Payouts" },
-  { href: "/dashboard/payment-methods", label: "Payment methods" },
-  { href: "/dashboard/settings", label: "Settings" },
-];
-
+/**
+ * The dashboard frame from the Figma Home frame: a 264 wide sidebar on desktop, a header and a
+ * bottom tab bar on a phone. The page content sits in the 1176 wide content area.
+ */
 export function DashboardShell({ children }: { children: ReactNode }) {
+  // "Your pay page" lists the pages that exist for it. Turn it on when /dashboard/appearance is built.
+  const showPayPage = false;
   return (
-    <div className="bg-background min-h-screen">
-      <header className="border-border bg-card border-b">
-        <div className="mx-auto flex max-w-5xl flex-wrap items-center gap-x-8 gap-y-2 px-4 py-3 md:px-8">
-          <Link href="/dashboard">
-            <Wordmark />
-          </Link>
-          <nav aria-label="Dashboard" className="flex max-w-full min-w-0 gap-1 overflow-x-auto">
-            {NAV.map((n) => (
-              <Link
-                key={n.href}
-                href={n.href}
-                className="text-foreground hover:bg-accent rounded-lg px-3 py-2 text-base font-semibold whitespace-nowrap"
-              >
-                {n.label}
-              </Link>
-            ))}
-          </nav>
-        </div>
+    <div className="min-h-screen bg-[var(--ollo-surface)] text-[var(--ollo-ink-900)]">
+      <aside className="fixed inset-y-0 left-0 hidden w-[264px] flex-col gap-2 overflow-y-auto bg-white px-4 py-8 md:flex">
+        <Link href="/dashboard" aria-label="Ollo home" className="flex h-14 items-start px-4 pb-6">
+          <OlloLogo className="h-8 text-[var(--ollo-teal-900)]" />
+        </Link>
+        <Suspense fallback={null}>
+          <SidebarNav showPayPage={showPayPage} />
+        </Suspense>
+      </aside>
+      <header className="flex h-16 items-center justify-between bg-white px-4 md:hidden">
+        <Link href="/dashboard" aria-label="Ollo home">
+          <OlloLogo className="h-7 text-[var(--ollo-teal-900)]" />
+        </Link>
       </header>
-      <main className="mx-auto max-w-5xl px-4 py-8 md:px-8">{children}</main>
+      <main className="flex flex-col gap-6 px-4 pt-6 pb-[99px] md:gap-8 md:py-10 md:pr-12 md:pb-10 md:pl-[312px]">
+        {children}
+      </main>
+      <Suspense fallback={null}>
+        <TabBar showPayPage={showPayPage} />
+      </Suspense>
     </div>
   );
 }

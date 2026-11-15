@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq, gte, sql } from "drizzle-orm";
+import { and, desc, eq, gte, lt, sql } from "drizzle-orm";
 import { redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth/server";
 import { db } from "@/lib/db";
@@ -23,7 +23,7 @@ export const RANGES = {
 export type RangeKey = keyof typeof RANGES;
 
 export function parseRange(value: string | undefined): RangeKey {
-  return value && value in RANGES ? (value as RangeKey) : "7d";
+  return value && value in RANGES ? (value as RangeKey) : "today";
 }
 
 function since(range: RangeKey) {
@@ -50,6 +50,55 @@ export async function getMoneyIn(sellerId: string, range: RangeKey) {
       ),
     );
   return { count: row?.count ?? 0, grossCents: row?.grossCents ?? 0, feeCents: row?.feeCents ?? 0 };
+}
+
+/** Money in between two moments. Used to compare a period with the one before it. */
+export async function getMoneyBetween(sellerId: string, from: Date, to: Date) {
+  const [row] = await db
+    .select({
+      grossCents: sql<number>`coalesce(sum(${payments.amountCents}), 0)::bigint`.mapWith(Number),
+    })
+    .from(payments)
+    .where(
+      and(
+        eq(payments.sellerId, sellerId),
+        eq(payments.status, "succeeded"),
+        gte(payments.createdAt, from),
+        lt(payments.createdAt, to),
+      ),
+    );
+  return row?.grossCents ?? 0;
+}
+
+/** The period right before the chosen one, as long, so the two can be compared. */
+export function previousPeriod(range: RangeKey) {
+  const start = since(range);
+  if (RANGES[range].days === 0) {
+    const from = new Date(start);
+    from.setDate(from.getDate() - 1);
+    return { from, to: start, label: "yesterday" };
+  }
+  const length = RANGES[range].days * 24 * 60 * 60 * 1000;
+  return {
+    from: new Date(start.getTime() - length),
+    to: start,
+    label: `the previous ${RANGES[range].days} days`,
+  };
+}
+
+/** Payments started in the period that are still waiting for the customer to pay. */
+export async function getPendingCount(sellerId: string, range: RangeKey) {
+  const [row] = await db
+    .select({ count: sql<number>`count(*)::int` })
+    .from(payments)
+    .where(
+      and(
+        eq(payments.sellerId, sellerId),
+        eq(payments.status, "pending"),
+        gte(payments.createdAt, since(range)),
+      ),
+    );
+  return row?.count ?? 0;
 }
 
 export function getRecentPayments(sellerId: string, limit = 8) {
