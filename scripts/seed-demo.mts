@@ -85,7 +85,9 @@ await db.insert(s.sellerVerification).values({
   idStatus: "verified",
 });
 // Without a survey row the app would send this seller back through onboarding.
-await db.insert(s.sellerSurvey).values({ sellerId: seller!.id, channels: ["Instagram", "WhatsApp"] });
+await db
+  .insert(s.sellerSurvey)
+  .values({ sellerId: seller!.id, channels: ["Instagram", "WhatsApp"] });
 
 const itemRows = await db
   .insert(s.items)
