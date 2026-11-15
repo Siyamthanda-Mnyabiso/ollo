@@ -45,11 +45,14 @@ test("pricing shows the agreed fees and leaves out the lines still waiting for w
 }) => {
   await page.goto("/pricing");
   await expect(page.getByRole("heading", { name: "Simple fees, no surprises" })).toBeVisible();
-  await expect(page.getByText("3% per bank sale")).toBeVisible();
-  await expect(page.getByText("3.9% per card sale")).toBeVisible();
+  await expect(page.getByText("3% per bank payment")).toBeVisible();
+  await expect(page.getByText("3.9% per card payment")).toBeVisible();
   await expect(page.getByText("R149 a month", { exact: true })).toBeVisible();
-  await expect(page.getByText("2.5% per bank sale")).toBeVisible();
+  await expect(page.getByText("2.5% per bank payment")).toBeVisible();
   await expect(page.getByText(/product listings|order requests|instantly/i)).toHaveCount(0);
+  await expect(page.getByText("Payment requests", { exact: true })).toBeVisible();
+  await expect(page.getByText("Straight to your bank account.", { exact: false })).toBeVisible();
+  await expect(page.getByText("More Pro features coming soon")).toBeVisible();
 });
 
 const PAGES: [string, string][] = [
@@ -124,6 +127,8 @@ test("the contact form has the frame's fields and a seller option picked by defa
   }
   await expect(page.getByRole("radio", { name: "Seller" })).toBeChecked();
   await expect(page.getByText("hello@ollopay.co.za")).toBeVisible();
+  await expect(page.getByText("+27 82 456 7890")).toHaveCount(0);
+  await expect(page.getByText("Support hours")).toHaveCount(0);
 });
 
 test("about shows the three beliefs from the frame", async ({ page }) => {

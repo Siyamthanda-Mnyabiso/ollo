@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, type FormEvent, type ReactNode } from "react";
-import { ChatIcon, ClockIcon, MailIcon } from "@/components/public/figma-icons";
+import { MailIcon } from "@/components/public/figma-icons";
 import { CONTACT, SUPPORT_EMAIL } from "@/lib/public/pages";
 
 const INPUT =
@@ -39,14 +39,7 @@ export function ContactBody() {
     window.location.href = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent("Message from the Ollo website")}&body=${encodeURIComponent(body)}`;
   }
   const tiles = [
-    {
-      ...CONTACT.otherWays.whatsapp,
-      Icon: ChatIcon,
-      tile: "bg-[var(--ollo-teal-900)]",
-      dark: true,
-    },
     { ...CONTACT.otherWays.email, Icon: MailIcon, tile: "bg-[var(--ollo-mint-50)]", dark: false },
-    { ...CONTACT.otherWays.hours, Icon: ClockIcon, tile: "bg-white", dark: false },
   ];
   return (
     <div className="grid gap-6 md:grid-cols-[672fr_424fr]">

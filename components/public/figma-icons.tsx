@@ -95,3 +95,9 @@ export const ClockIcon = make(24, 2.5, [
   "M12 7.5V12L15 14",
 ]);
 export const MenuIcon = make(24, 2.5, ["M4.5 7H19.5", "M4.5 12H19.5", "M4.5 17H13.5"]);
+/** A payment card. Drawn in the same style as the Figma icons; the frame still shows a cart here. */
+export const CardIcon = make(24, 2.5, [
+  "M6.5 5.5H17.5C19.1569 5.5 20.5 6.84315 20.5 8.5V15.5C20.5 17.1569 19.1569 18.5 17.5 18.5H6.5C4.84315 18.5 3.5 17.1569 3.5 15.5V8.5C3.5 6.84315 4.84315 5.5 6.5 5.5Z",
+  "M3.5 10H20.5",
+  "M7 14.5H10",
+]);

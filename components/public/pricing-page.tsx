@@ -2,7 +2,7 @@ import Link from "next/link";
 import type { ComponentType } from "react";
 import {
   BankIcon,
-  CartIcon,
+  CardIcon,
   ChatIcon,
   LinkIcon,
   ShieldIcon,
@@ -11,7 +11,7 @@ import {
 import { PRICING } from "@/lib/public/pages";
 
 type Icon = ComponentType<{ size?: number }>;
-const FREE_ICONS: Icon[] = [LinkIcon, CartIcon, ChatIcon];
+const FREE_ICONS: Icon[] = [LinkIcon, CardIcon, ChatIcon];
 const PRO_ICONS: Icon[] = [WalletIcon, BankIcon, ShieldIcon];
 
 function Plan({ index }: { index: 0 | 1 }) {

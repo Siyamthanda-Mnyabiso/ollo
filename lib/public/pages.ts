@@ -23,8 +23,8 @@ export const PRICING = {
       name: "Start selling",
       price: "Free",
       lines: [
-        `${rate("free", "bank")} per bank sale`,
-        `${rate("free", "card")} per card sale`,
+        `${rate("free", "bank")} per bank payment`,
+        `${rate("free", "card")} per card payment`,
         "Powered by Ollo on your pay page",
       ],
       button: "Make your pay link",
@@ -33,7 +33,11 @@ export const PRICING = {
       label: "Pro plan",
       name: "Grow with Ollo Pro",
       price: PLAN_OPTIONS.find((p) => p.value === "pro")!.price,
-      lines: [`${rate("pro", "bank")} per bank sale`, "Custom domain and no Ollo branding"],
+      lines: [
+        `${rate("pro", "bank")} per bank payment`,
+        "Custom domain and no Ollo branding",
+        "More Pro features coming soon",
+      ],
       button: "Go Pro",
     },
   ],
@@ -42,9 +46,15 @@ export const PRICING = {
     head: ["What", "Cost"],
     rows: [
       { name: "Pay link and pay page", value: "Free", strong: true },
+      { name: "Payment requests", value: "Free", strong: true },
       {
         name: "Payments (Free plan)",
         value: `${rate("free", "bank")} bank, ${rate("free", "card")} card. Pro: ${rate("pro", "bank")} bank`,
+        strong: false,
+      },
+      {
+        name: "Payouts to your bank",
+        value: "Straight to your bank account. Timing depends on how your customer pays.",
         strong: false,
       },
     ],
@@ -59,7 +69,7 @@ export const ABOUT = {
   photoLabel: "Founders photo",
   story: {
     title: "Our story",
-    lead: "Many South Africans run real businesses from Instagram, WhatsApp and TikTok. Taking orders and payments there is slow, manual and risky.",
+    lead: "Many South Africans run real businesses from Instagram, WhatsApp and TikTok. Taking payments there is slow, manual and risky.",
     body: "Ollo gives them a pay link and safe payments, so they get paid in seconds without a website or a card machine.",
   },
   beliefsTitle: "What we believe",
@@ -71,7 +81,7 @@ export const ABOUT = {
     { title: "Simple by default", body: "If it takes more than a few taps, we rebuild it." },
     {
       title: "Safe for buyers",
-      body: "Clear orders and trusted payments so customers feel confident.",
+      body: "Clear pay pages and trusted payments so customers feel confident.",
     },
   ],
 };
@@ -88,7 +98,7 @@ export const HELP = {
     },
     { question: "Do I need a website?", answer: null },
     { question: "How much does it cost?", answer: null },
-    { question: "How do customers order today?", answer: null },
+    { question: "How do customers pay today?", answer: null },
     { question: "When will payments start?", answer: null },
     { question: "Is my information safe?", answer: null },
   ],
@@ -113,9 +123,7 @@ export const CONTACT = {
   },
   otherWays: {
     title: "Other ways to reach us",
-    whatsapp: { title: "Chat on WhatsApp", value: "+27 82 456 7890" },
     email: { title: "Email us", value: SUPPORT_EMAIL },
-    hours: { title: "Support hours", value: "To be confirmed" },
   },
 };
 
@@ -138,7 +146,7 @@ export const TERMS: LegalPage = {
     "About Ollo and these terms",
     "Your account",
     "Selling on Ollo",
-    "Orders and payments",
+    "Payments",
     "Fees",
     "Refunds and disputes",
     "Suspending an account",

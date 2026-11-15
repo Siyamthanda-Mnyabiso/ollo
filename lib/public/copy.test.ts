@@ -82,10 +82,10 @@ describe("the flag", () => {
 describe("pricing page", () => {
   it("shows the agreed fees and leaves out the unconfirmed lines", () => {
     const text = JSON.stringify(PRICING);
-    expect(text).toMatch(/3% per bank sale/);
-    expect(text).toMatch(/3.9% per card sale/);
+    expect(text).toMatch(/3% per bank payment/);
+    expect(text).toMatch(/3.9% per card payment/);
     expect(text).toMatch(/R149 a month/);
-    expect(text).toMatch(/2.5% per bank sale/);
+    expect(text).toMatch(/2.5% per bank payment/);
     expect(text).not.toMatch(/product listing|order request|instantly|insights|discount|staff/i);
   });
 });
