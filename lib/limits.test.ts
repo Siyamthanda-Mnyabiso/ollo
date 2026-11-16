@@ -65,7 +65,7 @@ describe("limitMessage", () => {
   it("tells the buyer what to do for each limit", () => {
     expect(
       limitMessage({ ok: false, reason: "per_payment", limitCents: 500_000 }, "Thandi Treats"),
-    ).toMatch(/Thandi Treats can accept up to R\s?5\s?000,00 in one payment.*smaller amount/);
+    ).toMatch(/Thandi Treats can accept up to R5,000.00 in one payment.*smaller amount/);
     expect(
       limitMessage(
         { ok: false, reason: "per_day", limitCents: 2_000_000, remainingCents: 0 },

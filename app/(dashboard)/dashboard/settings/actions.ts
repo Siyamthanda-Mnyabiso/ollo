@@ -6,6 +6,7 @@ import { z } from "zod";
 import { requireSeller } from "@/lib/dashboard/queries";
 import { db } from "@/lib/db";
 import { auditLog, sellers } from "@/lib/db/schema";
+import { normaliseZaPhone } from "@/lib/auth/phone";
 import { saveVerifiedBank } from "@/lib/sellers/bank";
 import { bankSchema } from "@/lib/sellers/schemas";
 
@@ -22,6 +23,31 @@ const profileSchema = z.object({
     .min(2, "Enter the name customers will see")
     .max(60, "Keep it under 60 characters"),
   bio: z.string().trim().max(160, "Keep it under 160 characters").optional(),
+  whatsappNumber: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v, ctx) => {
+      if (!v) return null;
+      const n = normaliseZaPhone(v);
+      if (!n)
+        ctx.addIssue({ code: "custom", message: "Enter a valid South African cellphone number" });
+      return n;
+    }),
+  instagramHandle: z
+    .string()
+    .trim()
+    .optional()
+    .transform((v, ctx) => {
+      const name = (v ?? "")
+        .replace(/^@/, "")
+        .replace(/^https?:\/\/(www\.)?instagram\.com\//i, "")
+        .replace(/\/$/, "");
+      if (!name) return null;
+      if (!/^[A-Za-z0-9._]{1,30}$/.test(name))
+        ctx.addIssue({ code: "custom", message: "Enter your Instagram username" });
+      return name;
+    }),
 });
 
 export async function saveSettingsProfile(
@@ -32,6 +58,8 @@ export async function saveSettingsProfile(
   const parsed = profileSchema.safeParse({
     displayName: formData.get("displayName"),
     bio: formData.get("bio") || undefined,
+    whatsappNumber: formData.get("whatsappNumber") || undefined,
+    instagramHandle: formData.get("instagramHandle") || undefined,
   });
   if (!parsed.success) {
     return { fieldErrors: z.flattenError(parsed.error).fieldErrors as Record<string, string[]> };
@@ -39,7 +67,12 @@ export async function saveSettingsProfile(
   await db.transaction(async (tx) => {
     await tx
       .update(sellers)
-      .set({ displayName: parsed.data.displayName, bio: parsed.data.bio ?? null })
+      .set({
+        displayName: parsed.data.displayName,
+        bio: parsed.data.bio ?? null,
+        whatsappNumber: parsed.data.whatsappNumber,
+        instagramHandle: parsed.data.instagramHandle,
+      })
       .where(eq(sellers.id, seller.id));
     await tx.insert(auditLog).values({
       actor: user.id,

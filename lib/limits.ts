@@ -1,4 +1,4 @@
-import { formatRand } from "@/lib/money";
+import { formatRandFigma } from "@/lib/money";
 
 /**
  * Every payment limit and expiry lives here and nowhere else. Amounts are integer cents.
@@ -79,7 +79,7 @@ export function limitMessage(
   sellerName: string,
 ): string {
   if (check.reason === "per_payment") {
-    return `${sellerName} can accept up to ${formatRand(check.limitCents)} in one payment. Please pay a smaller amount, or pay in parts.`;
+    return `${sellerName} can accept up to ${formatRandFigma(check.limitCents)} in one payment. Please pay a smaller amount, or pay in parts.`;
   }
   return `${sellerName} cannot accept this payment right now because it is over their limit for today. Please try again tomorrow or ask them to contact Ollo.`;
 }

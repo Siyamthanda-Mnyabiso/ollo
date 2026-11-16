@@ -266,6 +266,8 @@ export async function getSellerByHandle(handle: string) {
       bio: sellers.bio,
       logoUrl: sellers.logoUrl,
       handle: sellers.handle,
+      whatsappNumber: sellers.whatsappNumber,
+      instagramHandle: sellers.instagramHandle,
       plan: sellers.plan,
       limitPerPaymentCents: sellers.limitPerPaymentCents,
       limitPerDayCents: sellers.limitPerDayCents,

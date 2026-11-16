@@ -13,7 +13,17 @@ import {
 } from "@/app/(dashboard)/dashboard/settings/actions";
 import { BANKS } from "@/lib/sellers/options";
 
-export function ProfileForm({ displayName, bio }: { displayName: string; bio: string }) {
+export function ProfileForm({
+  displayName,
+  bio,
+  whatsappNumber,
+  instagramHandle,
+}: {
+  displayName: string;
+  bio: string;
+  whatsappNumber: string;
+  instagramHandle: string;
+}) {
   const [state, action, pending] = useActionState<SettingsState, FormData>(saveSettingsProfile, {});
   return (
     <form onSubmit={keepForm(action)} className="space-y-5" noValidate>
@@ -31,6 +41,34 @@ export function ProfileForm({ displayName, bio }: { displayName: string; bio: st
         </Label>
         <Textarea id="bio" name="bio" defaultValue={bio} rows={2} />
         <FieldError messages={state.fieldErrors?.bio} />
+      </div>
+      <div>
+        <Label htmlFor="whatsappNumber" className="mb-1.5 block font-bold">
+          WhatsApp number (optional)
+        </Label>
+        <Input
+          id="whatsappNumber"
+          name="whatsappNumber"
+          type="tel"
+          inputMode="tel"
+          defaultValue={whatsappNumber}
+          placeholder="082 123 4567"
+          className="h-12"
+        />
+        <FieldError messages={state.fieldErrors?.whatsappNumber} />
+      </div>
+      <div>
+        <Label htmlFor="instagramHandle" className="mb-1.5 block font-bold">
+          Instagram username (optional)
+        </Label>
+        <Input
+          id="instagramHandle"
+          name="instagramHandle"
+          defaultValue={instagramHandle}
+          placeholder="yourname"
+          className="h-12"
+        />
+        <FieldError messages={state.fieldErrors?.instagramHandle} />
       </div>
       <CtaButton type="submit" disabled={pending}>
         {pending ? "Saving" : "Save"}

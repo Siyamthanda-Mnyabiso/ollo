@@ -99,6 +99,10 @@ export const sellers = rlsTable(
     category: text("category").notNull(),
     bio: text("bio"),
     logoUrl: text("logo_url"),
+    /** E.164, for the "Ask a question on WhatsApp" button on item pages. Optional. */
+    whatsappNumber: text("whatsapp_number"),
+    /** Instagram username without the @. Optional. */
+    instagramHandle: text("instagram_handle"),
     plan: planEnum("plan").notNull().default("free"),
     status: sellerStatusEnum("status").notNull().default("pending"),
     /** Set when the seller finishes onboarding. Null until then. */

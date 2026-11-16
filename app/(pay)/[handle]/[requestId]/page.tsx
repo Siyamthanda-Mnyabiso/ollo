@@ -3,11 +3,11 @@ import { and, eq } from "drizzle-orm";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { z } from "zod";
+import { BuyerPage, SellerBlock } from "@/components/pay/buyer";
 import { PayForm } from "@/components/pay/pay-form";
-import { PayFrame, PaySeller, PayShell, PayTrust } from "@/components/pay/page-shell";
+import { PayShell } from "@/components/pay/page-shell";
 import { db } from "@/lib/db";
 import { paymentRequests } from "@/lib/db/schema";
-import { formatRand } from "@/lib/money";
 import { enabledMethods, getSellerByHandle } from "@/lib/payments/service";
 
 async function RequestPayContent({
@@ -43,37 +43,27 @@ async function RequestPayContent({
 
   const methods = await enabledMethods(seller.id);
   return (
-    <PayFrame>
-      <PaySeller
+    <BuyerPage name={seller.displayName} logoUrl={seller.logoUrl} handle={seller.handle}>
+      <SellerBlock
         name={seller.displayName}
         bio={seller.bio}
         logoUrl={seller.logoUrl}
         verified={seller.status === "verified"}
       />
-      <section aria-label="Payment request">
-        <p className="text-muted-foreground font-bold">Payment request</p>
-        <p className="text-5xl font-extrabold tracking-tight" data-testid="request-amount">
-          {formatRand(request.amountCents)}
-        </p>
-        {request.description ? (
-          <p className="text-muted-foreground mt-1">{request.description}</p>
-        ) : null}
-        {request.expiresAt ? (
-          <p className="text-muted-foreground">
-            Open until{" "}
-            {request.expiresAt.toLocaleDateString("en-ZA", { day: "numeric", month: "long" })}
-          </p>
-        ) : null}
-      </section>
       <PayForm
         handle={seller.handle}
         requestId={request.id}
-        fixedAmountLabel={formatRand(request.amountCents)}
+        fixedAmountCents={request.amountCents}
+        summaryTitle={request.description || "Payment request"}
+        summarySub={
+          request.expiresAt
+            ? `Open until ${request.expiresAt.toLocaleDateString("en-ZA", { day: "numeric", month: "long" })}`
+            : undefined
+        }
         methods={methods}
         idempotencyKey={randomUUID()}
       />
-      <PayTrust handle={seller.handle} />
-    </PayFrame>
+    </BuyerPage>
   );
 }
 

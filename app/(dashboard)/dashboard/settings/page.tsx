@@ -26,7 +26,12 @@ async function SettingsContent() {
       </Card>
       <Card>
         <h2 className="mb-4 text-lg font-bold">Your details</h2>
-        <ProfileForm displayName={seller.displayName} bio={seller.bio ?? ""} />
+        <ProfileForm
+          displayName={seller.displayName}
+          bio={seller.bio ?? ""}
+          whatsappNumber={seller.whatsappNumber ?? ""}
+          instagramHandle={seller.instagramHandle ?? ""}
+        />
       </Card>
       <Card>
         <h2 className="text-lg font-bold">Bank account</h2>
