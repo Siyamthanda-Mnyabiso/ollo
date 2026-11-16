@@ -20,6 +20,8 @@ export async function resetSeller(phone: string) {
     await sql.begin(async (tx) => {
       await tx`set local session_replication_role = replica`;
       const own = tx`select id from sellers where user_id = ${u.id}`;
+      await tx`delete from order_lines where order_id in (select id from orders where seller_id in (${own}))`;
+      await tx`delete from orders where seller_id in (${own})`;
       await tx`delete from ledger_entries where payment_id in (select id from payments where seller_id in (${own}))`;
       await tx`delete from ledger_accounts where seller_id in (${own})`;
       await tx`delete from payouts where seller_id in (${own})`;

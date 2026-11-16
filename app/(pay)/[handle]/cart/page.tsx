@@ -18,7 +18,7 @@ async function CartContent({ params }: { params: PageProps<"/[handle]/cart">["pa
       backHref={`/${seller.handle}`}
       title="Cart"
       plainFooter
-      narrow
+      width={720}
     >
       <h1 className="text-[32px] leading-10 font-bold tracking-[-0.005em]">Your cart</h1>
       <CartView handle={seller.handle} />

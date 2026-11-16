@@ -153,7 +153,7 @@ export function BuyerPage({
   backHref,
   title,
   plainFooter,
-  narrow,
+  width = 1120,
   children,
 }: {
   name: string;
@@ -162,8 +162,8 @@ export function BuyerPage({
   backHref?: string;
   title?: string;
   plainFooter?: boolean;
-  /** The 720 wide column the Cart frame uses instead of the 1120 one. */
-  narrow?: boolean;
+  /** Width of the content column in px: 1120 by default, 720 on Cart, 560 on the order pages. */
+  width?: number;
   children: ReactNode;
 }) {
   return (
@@ -176,9 +176,7 @@ export function BuyerPage({
         title={title}
       />
       <main className="px-4 py-12 md:px-16">
-        <div
-          className={`mx-auto flex w-full flex-col gap-6 md:gap-8 ${narrow ? "max-w-[720px]" : "max-w-[1120px]"}`}
-        >
+        <div className="mx-auto flex w-full flex-col gap-6 md:gap-8" style={{ maxWidth: width }}>
           {children}
         </div>
       </main>

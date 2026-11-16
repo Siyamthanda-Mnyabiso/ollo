@@ -6,6 +6,7 @@ import { db } from "@/lib/db";
 import { items, sellers } from "@/lib/db/schema";
 import { BuyerPage, ImagePlaceholder } from "@/components/pay/buyer";
 import { ProductPurchase } from "@/components/pay/product-purchase";
+import { contactFor } from "@/lib/orders/contact";
 import { formatRandCompact } from "@/lib/money";
 import { getSellerByHandle } from "@/lib/payments/service";
 
@@ -15,26 +16,6 @@ import { getSellerByHandle } from "@/lib/payments/service";
  */
 const FRAME_DESCRIPTION =
   "Silky straight bundles, 100% human hair. Soft, tangle free and easy to style.";
-
-function contactFor(
-  seller: { whatsappNumber: string | null; instagramHandle: string | null },
-  itemName: string,
-) {
-  if (seller.whatsappNumber) {
-    const text = encodeURIComponent(`Hi, I have a question about ${itemName}`);
-    return {
-      kind: "whatsapp" as const,
-      href: `https://wa.me/${seller.whatsappNumber.replace(/\D/g, "")}?text=${text}`,
-    };
-  }
-  if (seller.instagramHandle) {
-    return {
-      kind: "instagram" as const,
-      href: `https://instagram.com/${seller.instagramHandle}`,
-    };
-  }
-  return null;
-}
 
 async function ProductContent({
   params,
@@ -95,7 +76,7 @@ async function ProductContent({
             itemId={item.id}
             name={item.name}
             priceCents={item.priceCents}
-            contact={contactFor(seller, item.name)}
+            contact={contactFor(seller, `Hi, I have a question about ${item.name}`)}
           />
         </div>
       </div>

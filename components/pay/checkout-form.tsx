@@ -1,24 +1,30 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import { useState, useSyncExternalStore, type FormEvent } from "react";
-import { parseCart, readCartRaw, subscribeCart } from "@/components/pay/cart-button";
+import { useState, useSyncExternalStore, useTransition, type FormEvent } from "react";
+import { submitOrder } from "@/app/(pay)/[handle]/checkout/actions";
+import { parseCart, readCartRaw, subscribeCart, writeCart } from "@/components/pay/cart-button";
 import { ImageIcon } from "@/components/public/figma-icons";
 import { formatRandCompact } from "@/lib/money";
 
 /*
- * The Checkout details frame. The app doesn't store the seller's collection address, a delivery fee
- * or delivery times yet, so the "Observatory, Cape Town" line, the R60 and the two time slots are the
- * frame's own. The three days come from today.
+ * The Checkout details frame. What the seller offers (collection address, delivery fee, days and time
+ * slots) comes from their delivery settings; the fee shown here is only a preview, the server works
+ * the real one out again when the order is made.
  */
-const FRAME_COLLECT_ADDRESS = "Observatory, Cape Town";
-const FRAME_DELIVERY_CENTS = 6000;
-const FRAME_SLOTS = ["10:00 to 12:00", "14:00 to 16:00"];
+export interface CheckoutOptions {
+  delivery: boolean;
+  collection: boolean;
+  collectionAddress: string | null;
+  deliveryFeeCents: number;
+  dates: { value: string; label: string }[];
+  slots: string[];
+}
 
 const card =
   "flex flex-col gap-4 rounded-2xl bg-white p-6 shadow-[0_1px_3px_rgba(15,31,45,0.06),0_4px_12px_rgba(15,31,45,0.06)]";
 const input =
-  "h-12 w-full min-w-0 rounded-lg border border-[#849199] bg-white px-4 text-base leading-6 text-[var(--ollo-ink-900)] placeholder:text-[var(--ollo-ink-900)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--ollo-teal-700)]";
+  "h-12 w-full min-w-0 rounded-lg border border-[#849199] bg-white px-4 text-base leading-6 text-[var(--ollo-ink-900)] placeholder:text-[var(--ollo-ink-500)] outline-none focus-visible:ring-2 focus-visible:ring-[var(--ollo-teal-700)]";
 
 export const checkoutKey = (handle: string) => `ollo-checkout-${handle}`;
 
@@ -82,7 +88,7 @@ function Radio({
   );
 }
 
-export function CheckoutForm({ handle, days }: { handle: string; days: string[] }) {
+export function CheckoutForm({ handle, options }: { handle: string; options: CheckoutOptions }) {
   const router = useRouter();
   const raw = useSyncExternalStore(
     subscribeCart,
@@ -90,33 +96,47 @@ export function CheckoutForm({ handle, days }: { handle: string; days: string[] 
     () => "[]",
   );
   const lines = parseCart(raw);
-  const [method, setMethod] = useState<"deliver" | "collect">("deliver");
-  const [day, setDay] = useState(days[0]!);
-  const [slot, setSlot] = useState(FRAME_SLOTS[0]!);
+  const [method, setMethod] = useState<"deliver" | "collect">(
+    options.delivery ? "deliver" : "collect",
+  );
+  const [day, setDay] = useState(options.dates[0]?.value ?? "");
+  const [slot, setSlot] = useState(options.slots[0] ?? "");
+  const [clientKey] = useState(() => crypto.randomUUID());
+  const [error, setError] = useState("");
+  const [pending, start] = useTransition();
+  const available = options.delivery || options.collection;
 
   const subtotal = lines.reduce((n, l) => n + l.priceCents * l.quantity, 0);
-  const delivery = method === "deliver" ? FRAME_DELIVERY_CENTS : 0;
+  const delivery = method === "deliver" ? options.deliveryFeeCents : 0;
 
   function submit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (pending) return;
     const f = new FormData(e.currentTarget);
-    try {
-      localStorage.setItem(
-        checkoutKey(handle),
-        JSON.stringify({
-          fullName: f.get("fullName"),
-          phone: f.get("phone"),
-          method,
-          street: f.get("street"),
-          suburb: f.get("suburb"),
-          day,
-          slot,
-        }),
-      );
-    } catch {
-      // Storage can be blocked; the details are then asked for again.
-    }
-    router.push(`/${handle}/pay`);
+    setError("");
+    start(async () => {
+      const result = await submitOrder(handle, {
+        clientKey,
+        fullName: f.get("fullName"),
+        phone: f.get("phone"),
+        method: method === "deliver" ? "delivery" : "collection",
+        street: f.get("street") || undefined,
+        suburb: f.get("suburb") || undefined,
+        date: day,
+        slot,
+        lines: lines.map((l) => ({
+          itemId: l.itemId,
+          quantity: l.quantity,
+          options: [{ name: "Length", value: l.length }],
+        })),
+      });
+      if ("error" in result) {
+        setError(result.error);
+        return;
+      }
+      writeCart(handle, []);
+      router.push(result.next);
+    });
   }
 
   return (
@@ -143,7 +163,7 @@ export function CheckoutForm({ handle, days }: { handle: string; days: string[] 
                 required
                 autoComplete="tel-national"
                 placeholder="71 234 5678"
-                className="h-full w-full min-w-0 bg-transparent text-base leading-6 text-[var(--ollo-ink-900)] outline-none placeholder:text-[var(--ollo-ink-900)]"
+                className="h-full w-full min-w-0 bg-transparent text-base leading-6 text-[var(--ollo-ink-900)] outline-none placeholder:text-[var(--ollo-ink-500)]"
               />
             </span>
           </Field>
@@ -151,20 +171,24 @@ export function CheckoutForm({ handle, days }: { handle: string; days: string[] 
 
         <section className={card}>
           <h2 className="text-xl leading-7 font-bold">Delivery or collection</h2>
-          <Radio
-            name="method"
-            checked={method === "deliver"}
-            onSelect={() => setMethod("deliver")}
-            title="Deliver to me"
-            subtitle="Enter your address"
-          />
-          <Radio
-            name="method"
-            checked={method === "collect"}
-            onSelect={() => setMethod("collect")}
-            title="Collect from seller"
-            subtitle={FRAME_COLLECT_ADDRESS}
-          />
+          {options.delivery ? (
+            <Radio
+              name="method"
+              checked={method === "deliver"}
+              onSelect={() => setMethod("deliver")}
+              title="Deliver to me"
+              subtitle="Enter your address"
+            />
+          ) : null}
+          {options.collection ? (
+            <Radio
+              name="method"
+              checked={method === "collect"}
+              onSelect={() => setMethod("collect")}
+              title="Collect from seller"
+              subtitle={options.collectionAddress ?? undefined}
+            />
+          ) : null}
           <Field label="Street address">
             <input
               name="street"
@@ -188,30 +212,41 @@ export function CheckoutForm({ handle, days }: { handle: string; days: string[] 
         <section className={card}>
           <h2 className="text-xl leading-7 font-bold">Delivery day and time</h2>
           <div className="flex flex-wrap items-center gap-2">
-            {days.map((d) => (
+            {options.dates.map((d) => (
               <button
-                key={d}
+                key={d.value}
                 type="button"
-                aria-pressed={d === day}
-                onClick={() => setDay(d)}
+                aria-pressed={d.value === day}
+                onClick={() => setDay(d.value)}
                 className={`flex h-12 items-center rounded-xl px-4 text-base leading-6 font-bold ${
-                  d === day
+                  d.value === day
                     ? "bg-[var(--ollo-teal-900)] text-white"
                     : "border border-[#849199] bg-white text-[var(--ollo-ink-900)]"
                 }`}
               >
-                {d}
+                {d.label}
               </button>
             ))}
           </div>
-          {FRAME_SLOTS.map((s) => (
+          {options.slots.map((s) => (
             <Radio key={s} name="slot" checked={s === slot} onSelect={() => setSlot(s)} title={s} />
           ))}
         </section>
 
+        {error ? (
+          <p role="alert" className="text-base leading-6 text-[#c62828]">
+            {error}
+          </p>
+        ) : null}
+        {available ? null : (
+          <p className="text-base leading-6 text-[var(--ollo-ink-500)]">
+            This seller has not set up delivery or collection yet.
+          </p>
+        )}
         <button
           type="submit"
-          className="flex h-12 items-center justify-center self-stretch rounded-xl bg-[var(--ollo-mint-500)] px-6 text-base leading-6 font-bold text-[var(--ollo-teal-900)] md:self-start"
+          disabled={pending || !available || lines.length === 0}
+          className="flex h-12 items-center justify-center self-stretch rounded-xl bg-[var(--ollo-mint-500)] px-6 text-base leading-6 font-bold text-[var(--ollo-teal-900)] disabled:opacity-60 md:self-start"
         >
           Send order request
         </button>
@@ -241,7 +276,7 @@ export function CheckoutForm({ handle, days }: { handle: string; days: string[] 
         </div>
         <div className="flex items-center gap-2 text-base leading-6">
           <span className="flex-1 text-[var(--ollo-ink-500)]">Delivery</span>
-          <span>{formatRandCompact(delivery)}</span>
+          <span>{method === "collect" ? "Free" : formatRandCompact(delivery)}</span>
         </div>
         <div className="flex items-center gap-2 text-base leading-6 font-bold">
           <span className="flex-1">Total</span>

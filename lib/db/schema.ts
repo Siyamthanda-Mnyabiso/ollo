@@ -69,6 +69,13 @@ export const paymentStatusEnum = pgEnum("payment_status", [
   "expired",
   "refunded",
 ]);
+export const orderStatusEnum = pgEnum("order_status", [
+  "placed",
+  "paid",
+  "sent",
+  "delivered",
+  "cancelled",
+]);
 export const requestStatusEnum = pgEnum("request_status", ["open", "paid", "expired", "cancelled"]);
 export const payoutStatusEnum = pgEnum("payout_status", [
   "pending",
@@ -110,11 +117,31 @@ export const sellers = rlsTable(
     /** Null means the default in lib/limits.ts. Only an admin changes these. */
     limitPerPaymentCents: integer("limit_per_payment_cents"),
     limitPerDayCents: integer("limit_per_day_cents"),
+    /** How buyers get their order: "delivery", "collection" or "both". */
+    fulfilment: text("fulfilment").notNull().default("both"),
+    /** Where buyers collect. Collection is not offered while this is empty. */
+    collectionAddress: text("collection_address"),
+    /** Flat delivery fee. Delivery is not offered while this is null (not set up). */
+    deliveryFeeCents: integer("delivery_fee_cents"),
+    /** Days of the week the seller delivers and is open for collection. 0 is Sunday. */
+    deliveryDays: integer("delivery_days")
+      .array()
+      .notNull()
+      .default(sql`'{}'::integer[]`),
+    /** Time slots such as "10:00 to 12:00". */
+    deliverySlots: text("delivery_slots")
+      .array()
+      .notNull()
+      .default(sql`'{}'::text[]`),
     /** No payouts are sent before this time. Set when the bank account changes. */
     payoutsPausedUntil: timestamp("payouts_paused_until", { withTimezone: true }),
     createdAt: createdAt(),
   },
   (t) => [
+    check(
+      "sellers_fulfilment_valid",
+      sql`${t.fulfilment} in ('delivery', 'collection', 'both') and (${t.deliveryFeeCents} is null or ${t.deliveryFeeCents} >= 0)`,
+    ),
     check(
       "sellers_limits_positive",
       sql`(${t.limitPerPaymentCents} is null or ${t.limitPerPaymentCents} > 0) and (${t.limitPerDayCents} is null or ${t.limitPerDayCents} > 0)`,
@@ -223,6 +250,92 @@ export const paymentRequests = rlsTable(
     index("payment_requests_seller_idx").on(t.sellerId),
     check("payment_requests_amount_positive", sql`${t.amountCents} > 0`),
     readOwn("payment_requests", t.sellerId),
+  ],
+);
+
+// ---- orders ----------------------------------------------------------------
+
+/**
+ * An order a buyer places from a seller's pay page. Amounts are always worked out on the server from
+ * the seller's own items and delivery settings; nothing a browser sends is trusted. Sellers can read
+ * their own orders. A buyer opens an order only through its unguessable access_token link, served by
+ * server code, so there is no policy for anyone else.
+ */
+export const orders = rlsTable(
+  "orders",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    /** The number shown as #OL-10458. */
+    number: bigint("number", { mode: "number" }).generatedAlwaysAsIdentity({ startWith: 10001 }),
+    sellerId: uuid("seller_id")
+      .notNull()
+      .references(() => sellers.id),
+    /** In the buyer's link: /{handle}/orders/{accessToken}. */
+    accessToken: text("access_token").notNull(),
+    /** Made by the checkout form once, so a double submit returns the same order. */
+    clientKey: text("client_key").notNull(),
+    buyerName: text("buyer_name").notNull(),
+    /** E.164 */
+    buyerPhone: text("buyer_phone").notNull(),
+    /** "delivery" or "collection" */
+    method: text("method").notNull(),
+    street: text("street"),
+    suburb: text("suburb"),
+    deliveryDate: text("delivery_date").notNull(),
+    deliverySlot: text("delivery_slot").notNull(),
+    subtotalCents: integer("subtotal_cents").notNull(),
+    deliveryFeeCents: integer("delivery_fee_cents").notNull(),
+    totalCents: integer("total_cents").notNull(),
+    status: orderStatusEnum("status").notNull().default("placed"),
+    paymentId: uuid("payment_id").references((): AnyPgColumn => payments.id),
+    placedAt: timestamp("placed_at", { withTimezone: true }).notNull().defaultNow(),
+    paidAt: timestamp("paid_at", { withTimezone: true }),
+    sentAt: timestamp("sent_at", { withTimezone: true }),
+    deliveredAt: timestamp("delivered_at", { withTimezone: true }),
+    cancelledAt: timestamp("cancelled_at", { withTimezone: true }),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    uniqueIndex("orders_number_unique").on(t.number),
+    uniqueIndex("orders_access_token_unique").on(t.accessToken),
+    uniqueIndex("orders_client_key_unique").on(t.sellerId, t.clientKey),
+    uniqueIndex("orders_payment_unique").on(t.paymentId),
+    index("orders_seller_idx").on(t.sellerId),
+    check("orders_method_valid", sql`${t.method} in ('delivery', 'collection')`),
+    check(
+      "orders_amounts_valid",
+      sql`${t.subtotalCents} > 0 and ${t.deliveryFeeCents} >= 0 and ${t.totalCents} = ${t.subtotalCents} + ${t.deliveryFeeCents}`,
+    ),
+    readOwn("orders", t.sellerId),
+  ],
+);
+
+export const orderLines = rlsTable(
+  "order_lines",
+  {
+    id: uuid("id").primaryKey().defaultRandom(),
+    orderId: uuid("order_id")
+      .notNull()
+      .references(() => orders.id, { onDelete: "cascade" }),
+    /** Kept when the item is later deleted, so the order still reads correctly. */
+    itemId: uuid("item_id").references(() => items.id, { onDelete: "set null" }),
+    name: text("name").notNull(),
+    /** [{ "name": "Length", "value": "14\"" }] */
+    options: jsonb("options")
+      .notNull()
+      .default(sql`'[]'::jsonb`),
+    quantity: integer("quantity").notNull(),
+    unitPriceCents: integer("unit_price_cents").notNull(),
+    createdAt: createdAt(),
+  },
+  (t) => [
+    index("order_lines_order_idx").on(t.orderId),
+    check("order_lines_valid", sql`${t.quantity} > 0 and ${t.unitPriceCents} > 0`),
+    pgPolicy("order_lines_select_own", {
+      for: "select",
+      to: authenticatedRole,
+      using: sql`${t.orderId} in (select o.id from orders o where o.seller_id in (select id from sellers where user_id = ${authUid}))`,
+    }),
   ],
 );
 

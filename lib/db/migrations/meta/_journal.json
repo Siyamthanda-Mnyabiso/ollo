@@ -71,6 +71,13 @@
       "when": 1794817151176,
       "tag": "0009_wise_wallop",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1794834697647,
+      "tag": "0010_daffy_fallen_one",
+      "breakpoints": true
     }
   ]
 }
